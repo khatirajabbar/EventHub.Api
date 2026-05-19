@@ -10,9 +10,13 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Event, EventResponseDto>();
+        CreateMap<Event, EventResponseDto>()
+            .ForMember(dest => dest.Organizer, opt => opt.MapFrom(src => src.Organizer));
         CreateMap<EventCreateDto, Event>();
         CreateMap<EventUpdateDto, Event>();
+        CreateMap<OrganizerUpdateDto, Organizer>();
+        CreateMap<TicketUpdateDto, Ticket>();
+
 
         CreateMap<Organizer, OrganizerResponseDto>();
         CreateMap<OrganizerCreateDto, Organizer>();

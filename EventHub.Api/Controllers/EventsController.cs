@@ -105,7 +105,7 @@ public class EventsController : ControllerBase
         ticket.EventId = eventId;
         _context.Tickets.Add(ticket);
         await _context.SaveChangesAsync();
-        return Ok(ticket);
+        return Ok(_mapper.Map<DTOs.Ticket.TicketResponseDto>(ticket));
     }
 
     // GET /api/events/{eventId}/organizer

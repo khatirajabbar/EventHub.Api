@@ -1,4 +1,5 @@
 namespace EventHub.Api.DTOs.Event;
+using EventHub.Api.DTOs.Organizer;
 
 public class EventResponseDto
 {
@@ -9,4 +10,5 @@ public class EventResponseDto
     public string Location { get; set; }
     public string? BannerImageUrl { get; set; }
     public int OrganizerId { get; set; }
+    public OrganizerResponseDto Organizer { get; set; } 
 }
