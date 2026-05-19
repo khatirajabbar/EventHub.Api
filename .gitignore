@@ -1,0 +1,87 @@
+# .gitignore for a typical .NET / ASP.NET Core project
+# Place this file at the repository root (next to EventHub.Api.sln)
+
+# Build / Visual Studio / Rider / dotnet artifacts
+bin/
+obj/
+publish/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+.packages/
+.nuget/
+.nuget/packages/
+
+# Rider/IDE caches
+*.Cache
+*.DotSettings.user
+
+# ASP.NET core / dotnet specific
+# Ignore appsettings and environment-specific variants to avoid committing secrets
+EventHub.Api/appsettings.json
+EventHub.Api/appsettings.*.json
+# If you prefer to ignore appsettings at project-root level for any nested projects
+appsettings.json
+appsettings.*.json
+
+secrets.json
+*.db
+*.sqlite
+*.db-shm
+*.db-wal
+
+# Logs and temporary files
+*.log
+logs/
+debug.log
+/tmp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Certificates, keys, and private data
+*.pfx
+*.key
+*.pem
+
+# Publish artifacts
+*.zip
+*.tar
+*.tar.gz
+
+# User secrets (if using ASP.NET Core user-secrets)
+secrets.json
+
+# Rider and ReSharper caches
+_ReSharper*/
+*.DotSettings.user
+
+# Static uploads and generated content (if you prefer to ignore media uploads)
+wwwroot/uploads/
+wwwroot/*.db
+
+# Optional: ignore coverage / test artifacts
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+
+# Optional: ignore generated migration snapshot if you prefer not to track (be cautious)
+# Migrations/           # <-- typically you DO want to track migrations, so leave commented out
+
