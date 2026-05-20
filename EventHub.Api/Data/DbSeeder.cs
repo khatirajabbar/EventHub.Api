@@ -1,4 +1,6 @@
 using EventHub.Api.Entities;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EventHub.Api.Data;
 
@@ -6,27 +8,21 @@ public static class DbSeeder
 {
     public static void Seed(AppDbContext context)
     {
+        if (!context.Users.Any())
+        {
+            context.Users.AddRange(
+                new User { Username = "admin", Email = "admin@eventhub.com", PasswordHash = HashPassword("Admin@123"), Role = "Admin", CreatedAt = DateTime.UtcNow },
+                new User { Username = "member", Email = "member@eventhub.com", PasswordHash = HashPassword("Member@123"), Role = "Member", CreatedAt = DateTime.UtcNow }
+            );
+            context.SaveChanges();
+        }
+
         if (!context.Organizers.Any())
         {
             context.Organizers.AddRange(
-                new Organizer
-                {
-                    Name = "Tech Events Co.",
-                    Email = "info@techevents.com",
-                    Phone = "+994501234567"
-                },
-                new Organizer
-                {
-                    Name = "Creative Minds Agency",
-                    Email = "hello@creativeminds.com",
-                    Phone = "+994557654321"
-                },
-                new Organizer
-                {
-                    Name = "Startup Hub Baku",
-                    Email = "contact@startuphub.az",
-                    Phone = "+994709876543"
-                }
+                new Organizer { Name = "Tech Events Co.", Email = "info@techevents.com", Phone = "+994501234567" },
+                new Organizer { Name = "Creative Minds Agency", Email = "hello@creativeminds.com", Phone = "+994557654321" },
+                new Organizer { Name = "Startup Hub Baku", Email = "contact@startuphub.az", Phone = "+994709876543" }
             );
             context.SaveChanges();
         }
@@ -34,57 +30,12 @@ public static class DbSeeder
         if (!context.Events.Any())
         {
             context.Events.AddRange(
-                // Organizer 1 - two events
-                new Event
-                {
-                    Title = "Tech Conference 2026",
-                    Description = "Annual technology conference covering AI, cloud and software development.",
-                    Date = new DateTime(2026, 7, 15),
-                    Location = "Baku Convention Center, Baku",
-                    OrganizerId = 1
-                },
-                new Event
-                {
-                    Title = "AI & Machine Learning Summit",
-                    Description = "Deep dive into the latest trends in artificial intelligence and ML.",
-                    Date = new DateTime(2026, 9, 20),
-                    Location = "ADA University, Baku",
-                    OrganizerId = 1
-                },
-                // Organizer 2 - two events
-                new Event
-                {
-                    Title = "Design & UX Workshop",
-                    Description = "Hands-on workshop for UI/UX designers and product teams.",
-                    Date = new DateTime(2026, 6, 10),
-                    Location = "Creative Hub, Nizami Street, Baku",
-                    OrganizerId = 2
-                },
-                new Event
-                {
-                    Title = "Photography Exhibition 2026",
-                    Description = "Annual exhibition showcasing the best local and international photography.",
-                    Date = new DateTime(2026, 8, 5),
-                    Location = "Baku Museum of Modern Art",
-                    OrganizerId = 2
-                },
-                // Organizer 3 - two events
-                new Event
-                {
-                    Title = "Startup Pitch Night",
-                    Description = "Early stage startups pitch to investors and industry mentors.",
-                    Date = new DateTime(2026, 6, 25),
-                    Location = "Startup Hub Baku, Əliağa Vahid str.",
-                    OrganizerId = 3
-                },
-                new Event
-                {
-                    Title = "Entrepreneurship Bootcamp",
-                    Description = "3-day intensive bootcamp for aspiring entrepreneurs and founders.",
-                    Date = new DateTime(2026, 10, 3),
-                    Location = "SABAH Center, Baku",
-                    OrganizerId = 3
-                }
+                new Event { Title = "Tech Conference 2026", Description = "Annual technology conference covering AI, cloud and software development.", Date = new DateTime(2026, 7, 15), Location = "Baku Convention Center, Baku", OrganizerId = 1 },
+                new Event { Title = "AI & Machine Learning Summit", Description = "Deep dive into the latest trends in artificial intelligence and ML.", Date = new DateTime(2026, 9, 20), Location = "ADA University, Baku", OrganizerId = 1 },
+                new Event { Title = "Design & UX Workshop", Description = "Hands-on workshop for UI/UX designers and product teams.", Date = new DateTime(2026, 6, 10), Location = "Creative Hub, Nizami Street, Baku", OrganizerId = 2 },
+                new Event { Title = "Photography Exhibition 2026", Description = "Annual exhibition showcasing the best local and international photography.", Date = new DateTime(2026, 8, 5), Location = "Baku Museum of Modern Art", OrganizerId = 2 },
+                new Event { Title = "Startup Pitch Night", Description = "Early stage startups pitch to investors and industry mentors.", Date = new DateTime(2026, 6, 25), Location = "Startup Hub Baku, Əliağa Vahid str.", OrganizerId = 3 },
+                new Event { Title = "Entrepreneurship Bootcamp", Description = "3-day intensive bootcamp for aspiring entrepreneurs and founders.", Date = new DateTime(2026, 10, 3), Location = "SABAH Center, Baku", OrganizerId = 3 }
             );
             context.SaveChanges();
         }
@@ -92,21 +43,15 @@ public static class DbSeeder
         if (!context.Tickets.Any())
         {
             context.Tickets.AddRange(
-                // Event 1
                 new Ticket { EventId = 1, Type = "VIP", Price = 150, QuantityAvailable = 50 },
                 new Ticket { EventId = 1, Type = "Regular", Price = 50, QuantityAvailable = 200 },
-                // Event 2
                 new Ticket { EventId = 2, Type = "VIP", Price = 200, QuantityAvailable = 30 },
                 new Ticket { EventId = 2, Type = "Regular", Price = 75, QuantityAvailable = 150 },
-                // Event 3
                 new Ticket { EventId = 3, Type = "Regular", Price = 40, QuantityAvailable = 100 },
                 new Ticket { EventId = 3, Type = "Student", Price = 20, QuantityAvailable = 50 },
-                // Event 4
                 new Ticket { EventId = 4, Type = "General", Price = 25, QuantityAvailable = 300 },
-                // Event 5
                 new Ticket { EventId = 5, Type = "VIP", Price = 100, QuantityAvailable = 20 },
                 new Ticket { EventId = 5, Type = "Regular", Price = 35, QuantityAvailable = 120 },
-                // Event 6
                 new Ticket { EventId = 6, Type = "Early Bird", Price = 60, QuantityAvailable = 40 },
                 new Ticket { EventId = 6, Type = "Regular", Price = 90, QuantityAvailable = 100 },
                 new Ticket { EventId = 6, Type = "Student", Price = 30, QuantityAvailable = 60 }
@@ -114,4 +59,12 @@ public static class DbSeeder
             context.SaveChanges();
         }
     }
+
+    private static string HashPassword(string password)
+    {
+        using var sha256 = SHA256.Create();
+        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+        return Convert.ToBase64String(hashedBytes);
+    }
 }
+
