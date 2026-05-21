@@ -56,7 +56,12 @@ public static class ServiceExtensions
 
         services.AddAuthorization();
 
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                // Configure JSON to use enum names instead of numbers
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
@@ -89,6 +94,11 @@ public static class ServiceExtensions
             };
 
             options.AddSecurityRequirement(securityRequirement);
+            
+            // Configure Swagger to show enum values as strings
+            options.SchemaFilter<EnumSchemaFilter>();
+            options.ParameterFilter<EnumParameterFilter>();
+            options.OperationFilter<EnumParameterFilter>();
         });
 
         return services;

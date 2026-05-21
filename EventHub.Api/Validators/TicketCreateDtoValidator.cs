@@ -8,7 +8,7 @@ public class TicketCreateDtoValidator : AbstractValidator<TicketCreateDto>
     public TicketCreateDtoValidator()
     {
         RuleFor(x => x.EventId).GreaterThan(0).WithMessage("Event ID must be greater than 0.");
-        RuleFor(x => x.Type).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Type).IsInEnum().WithMessage("Ticket type must be a valid enum value (VIP, Regular, Standard, Premium, Basic).");
         RuleFor(x => x.Price).GreaterThan(0);
         RuleFor(x => x.QuantityAvailable).GreaterThanOrEqualTo(0);
     }

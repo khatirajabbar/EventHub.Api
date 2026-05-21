@@ -43,7 +43,7 @@ public class TicketsController : ControllerBase
     // POST /api/tickets
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromBody] TicketCreateDto dto)
+    public async Task<IActionResult> Create([FromForm] TicketCreateDto dto)
     {
         var eventExists = await _context.Events.AnyAsync(e => e.Id == dto.EventId);
         if (!eventExists)

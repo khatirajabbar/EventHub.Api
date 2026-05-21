@@ -1,4 +1,5 @@
 using EventHub.Api.Entities;
+using EventHub.Api.Enums;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -43,18 +44,18 @@ public static class DbSeeder
         if (!context.Tickets.Any())
         {
             context.Tickets.AddRange(
-                new Ticket { EventId = 1, Type = "VIP", Price = 150, QuantityAvailable = 50 },
-                new Ticket { EventId = 1, Type = "Regular", Price = 50, QuantityAvailable = 200 },
-                new Ticket { EventId = 2, Type = "VIP", Price = 200, QuantityAvailable = 30 },
-                new Ticket { EventId = 2, Type = "Regular", Price = 75, QuantityAvailable = 150 },
-                new Ticket { EventId = 3, Type = "Regular", Price = 40, QuantityAvailable = 100 },
-                new Ticket { EventId = 3, Type = "Student", Price = 20, QuantityAvailable = 50 },
-                new Ticket { EventId = 4, Type = "General", Price = 25, QuantityAvailable = 300 },
-                new Ticket { EventId = 5, Type = "VIP", Price = 100, QuantityAvailable = 20 },
-                new Ticket { EventId = 5, Type = "Regular", Price = 35, QuantityAvailable = 120 },
-                new Ticket { EventId = 6, Type = "Early Bird", Price = 60, QuantityAvailable = 40 },
-                new Ticket { EventId = 6, Type = "Regular", Price = 90, QuantityAvailable = 100 },
-                new Ticket { EventId = 6, Type = "Student", Price = 30, QuantityAvailable = 60 }
+                new Ticket { EventId = 1, Type = TicketType.VIP, Price = 150, QuantityAvailable = 50 },
+                new Ticket { EventId = 1, Type = TicketType.Regular, Price = 50, QuantityAvailable = 200 },
+                new Ticket { EventId = 2, Type = TicketType.VIP, Price = 200, QuantityAvailable = 30 },
+                new Ticket { EventId = 2, Type = TicketType.Regular, Price = 75, QuantityAvailable = 150 },
+                new Ticket { EventId = 3, Type = TicketType.Regular, Price = 40, QuantityAvailable = 100 },
+                new Ticket { EventId = 3, Type = TicketType.Standard, Price = 20, QuantityAvailable = 50 },
+                new Ticket { EventId = 4, Type = TicketType.Basic, Price = 25, QuantityAvailable = 300 },
+                new Ticket { EventId = 5, Type = TicketType.VIP, Price = 100, QuantityAvailable = 20 },
+                new Ticket { EventId = 5, Type = TicketType.Regular, Price = 35, QuantityAvailable = 120 },
+                new Ticket { EventId = 6, Type = TicketType.Premium, Price = 60, QuantityAvailable = 40 },
+                new Ticket { EventId = 6, Type = TicketType.Regular, Price = 90, QuantityAvailable = 100 },
+                new Ticket { EventId = 6, Type = TicketType.Standard, Price = 30, QuantityAvailable = 60 }
             );
             context.SaveChanges();
         }
