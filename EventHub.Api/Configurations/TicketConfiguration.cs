@@ -13,6 +13,7 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Property(t => t.Price).HasColumnType("decimal(18,2)");
         builder.HasOne(t => t.Event)
             .WithMany(e => e.Tickets)
-            .HasForeignKey(t => t.EventId);
+            .HasForeignKey(t => t.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

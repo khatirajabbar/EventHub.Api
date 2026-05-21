@@ -14,6 +14,7 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.Property(e => e.Location).IsRequired().HasMaxLength(200);
         builder.HasOne(e => e.Organizer)
             .WithMany(o => o.Events)
-            .HasForeignKey(e => e.OrganizerId);
+            .HasForeignKey(e => e.OrganizerId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

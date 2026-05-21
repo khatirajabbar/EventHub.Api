@@ -2,6 +2,7 @@ using AutoMapper;
 using EventHub.Api.Data;
 using EventHub.Api.DTOs.Ticket;
 using EventHub.Api.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,7 @@ public class TicketsController : ControllerBase
 
     // GET /api/tickets
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var tickets = await _context.Tickets.Include(t => t.Event).ToListAsync();
@@ -30,6 +32,7 @@ public class TicketsController : ControllerBase
 
     // GET /api/tickets/{id}
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<IActionResult> GetById(int id)
     {
         var ticket = await _context.Tickets.Include(t => t.Event).FirstOrDefaultAsync(t => t.Id == id);
@@ -39,10 +42,13 @@ public class TicketsController : ControllerBase
 
     // POST /api/tickets
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] TicketCreateDto dto)
     {
         var eventExists = await _context.Events.AnyAsync(e => e.Id == dto.EventId);
-        if (!eventExists) return NotFound(new { message = "Event not found." });
+        if (!eventExists)
+            return BadRequest(new { error = "Event with the specified ID does not exist." });
+
         var ticket = _mapper.Map<Ticket>(dto);
         _context.Tickets.Add(ticket);
         await _context.SaveChangesAsync();
@@ -51,10 +57,16 @@ public class TicketsController : ControllerBase
 
     // PUT /api/tickets/{id}
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] TicketUpdateDto dto)
     {
         var ticket = await _context.Tickets.FindAsync(id);
         if (ticket == null) return NotFound();
+
+        var eventExists = await _context.Events.AnyAsync(e => e.Id == dto.EventId);
+        if (!eventExists)
+            return BadRequest(new { error = "Event with the specified ID does not exist." });
+
         _mapper.Map(dto, ticket);
         await _context.SaveChangesAsync();
         return Ok(_mapper.Map<TicketResponseDto>(ticket));
@@ -62,6 +74,7 @@ public class TicketsController : ControllerBase
 
     // DELETE /api/tickets/{id}
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var ticket = await _context.Tickets.FindAsync(id);

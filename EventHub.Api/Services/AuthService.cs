@@ -27,13 +27,13 @@ public class AuthService : IAuthService
         if (existingUser != null)
             throw new InvalidOperationException("Username or email already exists.");
 
-        // Create new user
+        // Create new user with default "Member" role
         var user = new User
         {
             Username = dto.Username,
             Email = dto.Email,
             PasswordHash = HashPassword(dto.Password),
-            Role = dto.Role,
+            Role = "Member", // Default role - admins can promote users later
             CreatedAt = DateTime.UtcNow
         };
 

@@ -8,6 +8,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 namespace EventHub.Api.Extensions;
@@ -29,6 +30,8 @@ public static class ServiceExtensions
 
         // Configure JWT Settings
         var jwtSettings = config.GetSection("JwtSettings").Get<JwtSettings>();
+        if (jwtSettings == null)
+            throw new InvalidOperationException("JwtSettings configuration is missing from appsettings.json");
         services.AddSingleton(jwtSettings);
 
         // Configure JWT Authentication
@@ -55,7 +58,38 @@ public static class ServiceExtensions
 
         services.AddControllers();
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddSwaggerGen(options =>
+        {
+            // Add JWT Bearer Authentication to Swagger
+            var securityScheme = new OpenApiSecurityScheme
+            {
+                Name = "JWT Authentication",
+                Description = "Enter JWT token",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
+            };
+
+            options.AddSecurityDefinition("Bearer", securityScheme);
+
+            var securityRequirement = new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] { }
+                }
+            };
+
+            options.AddSecurityRequirement(securityRequirement);
+        });
 
         return services;
     }

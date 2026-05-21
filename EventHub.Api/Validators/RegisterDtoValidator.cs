@@ -23,10 +23,6 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
 
         RuleFor(x => x.ConfirmPassword)
             .Equal(x => x.Password).WithMessage("Passwords do not match.");
-
-        RuleFor(x => x.Role)
-            .NotEmpty().WithMessage("Role is required.")
-            .Must(r => r == "Admin" || r == "Member").WithMessage("Role must be either 'Admin' or 'Member'.");
     }
 }
 

@@ -11,6 +11,6 @@ public class EventCreateDtoValidator : AbstractValidator<EventCreateDto>
         RuleFor(x => x.Description).MaximumLength(500);
         RuleFor(x => x.Date).GreaterThan(DateTime.UtcNow).WithMessage("Date must be in the future.");
         RuleFor(x => x.Location).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.OrganizerId).GreaterThan(0);
+        RuleFor(x => x.OrganizerId).GreaterThan(0).WithMessage("Organizer ID must be greater than 0.");
     }
 }
