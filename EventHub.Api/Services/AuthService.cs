@@ -27,6 +27,9 @@ public class AuthService : IAuthService
         if (existingUser != null)
             throw new InvalidOperationException("Username or email already exists.");
 
+        // Generate refresh token
+        var refreshToken = GenerateRefreshToken();
+
         // Create new user with default "Member" role
         var user = new User
         {
@@ -34,7 +37,9 @@ public class AuthService : IAuthService
             Email = dto.Email,
             PasswordHash = HashPassword(dto.Password),
             Role = "Member", // Default role - admins can promote users later
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiry = DateTime.UtcNow.AddDays(7)
         };
 
         _context.Users.Add(user);
@@ -47,7 +52,8 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             Token = GenerateJwtToken(user),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RefreshToken = refreshToken
         };
     }
 
@@ -58,6 +64,12 @@ public class AuthService : IAuthService
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid username or password.");
 
+        // Generate refresh token
+        var refreshToken = GenerateRefreshToken();
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7); // Refresh token expires in 7 days
+        await _context.SaveChangesAsync();
+
         return new AuthResponseDto
         {
             Id = user.Id,
@@ -65,8 +77,46 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             Token = GenerateJwtToken(user),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RefreshToken = refreshToken
         };
+    }
+
+    public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
+    {
+        // Find user by refresh token
+        var user = _context.Users.FirstOrDefault(u => u.RefreshToken == refreshToken);
+        if (user == null)
+            throw new UnauthorizedAccessException("Invalid refresh token.");
+
+        // Check if refresh token is expired
+        if (user.RefreshTokenExpiry < DateTime.UtcNow)
+            throw new UnauthorizedAccessException("Refresh token has expired.");
+
+        // Generate new refresh token
+        var newRefreshToken = GenerateRefreshToken();
+        user.RefreshToken = newRefreshToken;
+        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        await _context.SaveChangesAsync();
+
+        return new AuthResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role,
+            Token = GenerateJwtToken(user),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RefreshToken = newRefreshToken
+        };
+    }
+
+    private string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
     }
 
     private string GenerateJwtToken(User user)

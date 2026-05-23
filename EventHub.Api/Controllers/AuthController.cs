@@ -54,6 +54,21 @@ public class AuthController : ControllerBase
         }
     }
 
+    // POST /api/auth/refresh
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto dto)
+    {
+        try
+        {
+            var result = await _authService.RefreshTokenAsync(dto.RefreshToken);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
     // GET /api/auth/profile
     [HttpGet("profile")]
     [Authorize]
