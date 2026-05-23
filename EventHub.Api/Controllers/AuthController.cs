@@ -69,6 +69,32 @@ public class AuthController : ControllerBase
         }
     }
 
+    // POST /api/auth/change-password
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        try
+        {
+            // Get user ID from JWT token
+            var userIdClaim = User.FindFirst("sub")?.Value;
+            if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Invalid token." });
+
+            // Change password
+            await _authService.ChangePasswordAsync(userId, dto.OldPassword, dto.NewPassword);
+            return Ok(new { message = "Password changed successfully." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while changing password.", error = ex.Message });
+        }
+    }
+
     // GET /api/auth/profile
     [HttpGet("profile")]
     [Authorize]

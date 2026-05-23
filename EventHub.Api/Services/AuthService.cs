@@ -119,6 +119,24 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(randomNumber);
     }
 
+    public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)
+    {
+        // Find user by ID
+        var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+        if (user == null)
+            throw new UnauthorizedAccessException("User not found.");
+
+        // Verify old password
+        if (!VerifyPassword(oldPassword, user.PasswordHash))
+            throw new UnauthorizedAccessException("Old password is incorrect.");
+
+        // Update password
+        user.PasswordHash = HashPassword(newPassword);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
     private string GenerateJwtToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
