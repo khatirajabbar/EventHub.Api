@@ -95,6 +95,32 @@ public class AuthController : ControllerBase
         }
     }
 
+    // GET /api/auth/confirm-email
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string token, [FromQuery] string email)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                return BadRequest(new { message = "Token and email are required." });
+
+            await _authService.ConfirmEmailAsync(token, email);
+            return Ok(new { message = "Email confirmed successfully! You can now login." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while confirming email.", error = ex.Message });
+        }
+    }
+
     // GET /api/auth/profile
     [HttpGet("profile")]
     [Authorize]

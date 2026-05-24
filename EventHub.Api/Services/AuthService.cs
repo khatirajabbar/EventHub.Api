@@ -13,11 +13,15 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
     private readonly JwtSettings _jwtSettings;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext context, JwtSettings jwtSettings)
+    public AuthService(AppDbContext context, JwtSettings jwtSettings, IEmailService emailService, ILogger<AuthService> logger)
     {
         _context = context;
         _jwtSettings = jwtSettings;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -29,6 +33,9 @@ public class AuthService : IAuthService
 
         // Generate refresh token
         var refreshToken = GenerateRefreshToken();
+        
+        // Generate email confirmation token
+        var emailConfirmationToken = GenerateEmailConfirmationToken();
 
         // Create new user with default "Member" role
         var user = new User
@@ -39,11 +46,27 @@ public class AuthService : IAuthService
             Role = "Member", // Default role - admins can promote users later
             CreatedAt = DateTime.UtcNow,
             RefreshToken = refreshToken,
-            RefreshTokenExpiry = DateTime.UtcNow.AddDays(7)
+            RefreshTokenExpiry = DateTime.UtcNow.AddDays(7),
+            IsEmailConfirmed = false,
+            EmailConfirmationToken = emailConfirmationToken,
+            EmailConfirmationTokenExpiry = DateTime.UtcNow.AddHours(24) // Token expires in 24 hours
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
+        // Send confirmation email
+        var confirmationLink = $"https://localhost:5220/api/auth/confirm-email?token={emailConfirmationToken}&email={dto.Email}";
+        var emailBody = $@"
+            <h2>Welcome to EventHub!</h2>
+            <p>Please confirm your email address to activate your account.</p>
+            <a href='{confirmationLink}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                Confirm Email
+            </a>
+            <p>Or copy this link: {confirmationLink}</p>
+            <p>This link expires in 24 hours.</p>";
+
+        await _emailService.SendEmailAsync(dto.Email, "Confirm Your Email - EventHub", emailBody);
 
         return new AuthResponseDto
         {
@@ -63,6 +86,10 @@ public class AuthService : IAuthService
         var user = _context.Users.FirstOrDefault(u => u.Username == dto.Username);
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid username or password.");
+
+        // Check if email is confirmed
+        if (!user.IsEmailConfirmed)
+            throw new UnauthorizedAccessException("Please confirm your email address before logging in.");
 
         // Generate refresh token
         var refreshToken = GenerateRefreshToken();
@@ -117,6 +144,37 @@ public class AuthService : IAuthService
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
+    }
+
+    private string GenerateEmailConfirmationToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    public async Task<bool> ConfirmEmailAsync(string token, string email)
+    {
+        var user = _context.Users.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+            throw new UnauthorizedAccessException("User not found.");
+
+        if (user.IsEmailConfirmed)
+            throw new InvalidOperationException("Email is already confirmed.");
+
+        if (user.EmailConfirmationToken != token)
+            throw new UnauthorizedAccessException("Invalid confirmation token.");
+
+        if (user.EmailConfirmationTokenExpiry < DateTime.UtcNow)
+            throw new UnauthorizedAccessException("Confirmation token has expired.");
+
+        user.IsEmailConfirmed = true;
+        user.EmailConfirmationToken = null;
+        user.EmailConfirmationTokenExpiry = DateTime.MinValue;
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)

@@ -27,12 +27,19 @@ public static class ServiceExtensions
 
         services.AddScoped<FileService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IEmailService, EmailService>();
 
         // Configure JWT Settings
         var jwtSettings = config.GetSection("JwtSettings").Get<JwtSettings>();
         if (jwtSettings == null)
             throw new InvalidOperationException("JwtSettings configuration is missing from appsettings.json");
         services.AddSingleton(jwtSettings);
+
+        // Configure Email Settings
+        var emailSettings = config.GetSection("EmailSettings").Get<EmailSettings>();
+        if (emailSettings == null)
+            throw new InvalidOperationException("EmailSettings configuration is missing from appsettings.json");
+        services.AddSingleton(emailSettings);
 
         // Configure JWT Authentication
         services.AddAuthentication(options =>

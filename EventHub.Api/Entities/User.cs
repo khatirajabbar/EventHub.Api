@@ -10,5 +10,8 @@ public class User
     public DateTime CreatedAt { get; set; }
     public string RefreshToken { get; set; }
     public DateTime RefreshTokenExpiry { get; set; }
+    public bool IsEmailConfirmed { get; set; }
+    public string EmailConfirmationToken { get; set; }
+    public DateTime EmailConfirmationTokenExpiry { get; set; }
 }
 
