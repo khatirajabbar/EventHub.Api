@@ -95,6 +95,36 @@ public class AuthController : ControllerBase
         }
     }
 
+    // POST /api/auth/change-email
+    [HttpPost("change-email")]
+    [Authorize]
+    public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto dto)
+    {
+        try
+        {
+            // Get user ID from JWT token
+            var userIdClaim = User.FindFirst("sub")?.Value;
+            if (userIdClaim == null || !int.TryParse(userIdClaim, out var userId))
+                return Unauthorized(new { message = "Invalid token." });
+
+            // Change email
+            await _authService.ChangeEmailAsync(userId, dto.NewEmail, dto.Password);
+            return Ok(new { message = "Email changed successfully." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while changing email.", error = ex.Message });
+        }
+    }
+
     // GET /api/auth/confirm-email
     [HttpGet("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string token, [FromQuery] string email)
@@ -148,6 +178,51 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "An error occurred while retrieving profile.", error = ex.Message });
+        }
+    }
+
+    // POST /api/auth/forgot-password
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        try
+        {
+            await _authService.ForgotPasswordAsync(dto.Email);
+            return Ok(new { message = "Password reset link has been sent to your email. Check your inbox." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while processing forgot password request.", error = ex.Message });
+        }
+    }
+
+    // POST /api/auth/reset-password
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(dto.Token) || string.IsNullOrEmpty(dto.Email))
+                return BadRequest(new { message = "Token and email are required." });
+
+            await _authService.ResetPasswordAsync(dto.Token, dto.Email, dto.NewPassword);
+            return Ok(new { message = "Password has been reset successfully. You can now login with your new password." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while resetting password.", error = ex.Message });
         }
     }
 }

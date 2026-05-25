@@ -231,5 +231,79 @@ public class AuthService : IAuthService
         var hashOfInput = HashPassword(password);
         return hashOfInput == hash;
     }
+
+    public async Task<bool> ForgotPasswordAsync(string email)
+    {
+        var user = _context.Users.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+            throw new InvalidOperationException("User with this email not found.");
+
+        // Generate password reset token
+        var resetToken = GenerateEmailConfirmationToken();
+        user.PasswordResetToken = resetToken;
+        user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Token expires in 1 hour
+
+        await _context.SaveChangesAsync();
+
+        // Send reset password email
+        var resetLink = $"https://localhost:5220/api/auth/reset-password?token={resetToken}&email={email}";
+        var emailBody = $@"
+            <h2>Password Reset Request</h2>
+            <p>You requested to reset your password. Click the link below to proceed:</p>
+            <a href='{resetLink}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
+                Reset Password
+            </a>
+            <p>Or copy this link: {resetLink}</p>
+            <p>This link expires in 1 hour.</p>
+            <p>If you didn't request this, please ignore this email.</p>";
+
+        await _emailService.SendEmailAsync(email, "Reset Your Password - EventHub", emailBody);
+
+        return true;
+    }
+
+    public async Task<bool> ResetPasswordAsync(string token, string email, string newPassword)
+    {
+        var user = _context.Users.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+            throw new InvalidOperationException("User not found.");
+
+        if (user.PasswordResetToken != token)
+            throw new UnauthorizedAccessException("Invalid reset token.");
+
+        if (user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            throw new UnauthorizedAccessException("Reset token has expired.");
+
+        // Update password
+        user.PasswordHash = HashPassword(newPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpiry = DateTime.MinValue;
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> ChangeEmailAsync(int userId, string newEmail, string password)
+    {
+        // Find user by ID
+        var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+        if (user == null)
+            throw new UnauthorizedAccessException("User not found.");
+
+        // Verify password
+        if (!VerifyPassword(password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Password is incorrect.");
+
+        // Check if new email is already in use
+        var existingUser = _context.Users.FirstOrDefault(u => u.Email == newEmail && u.Id != userId);
+        if (existingUser != null)
+            throw new InvalidOperationException("Email is already in use by another account.");
+
+        // Update email
+        user.Email = newEmail;
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }
 
