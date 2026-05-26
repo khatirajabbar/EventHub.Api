@@ -24,7 +24,7 @@ public class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
+    public async Task<RegisterResponseDto> RegisterAsync(RegisterDto dto)
     {
         // Check if user already exists
         var existingUser = _context.Users.FirstOrDefault(u => u.Username == dto.Username || u.Email == dto.Email);
@@ -56,7 +56,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         // Send confirmation email
-        var confirmationLink = $"https://localhost:5220/api/auth/confirm-email?token={emailConfirmationToken}&email={dto.Email}";
+        var confirmationLink = $"http://localhost:5220/api/auth/confirm-email?token={emailConfirmationToken}&email={dto.Email}";
         var emailBody = $@"
             <h2>Welcome to EventHub!</h2>
             <p>Please confirm your email address to activate your account.</p>
@@ -68,15 +68,13 @@ public class AuthService : IAuthService
 
         await _emailService.SendEmailAsync(dto.Email, "Confirm Your Email - EventHub", emailBody);
 
-        return new AuthResponseDto
+        return new RegisterResponseDto
         {
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
             Role = user.Role,
-            Token = GenerateJwtToken(user),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
-            RefreshToken = refreshToken
+            Message = "Registration successful! Please check your email to confirm your account before logging in."
         };
     }
 
@@ -246,7 +244,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         // Send reset password email
-        var resetLink = $"https://localhost:5220/api/auth/reset-password?token={resetToken}&email={email}";
+        var resetLink = $"http://localhost:5220/api/auth/reset-password?token={resetToken}&email={email}";
         var emailBody = $@"
             <h2>Password Reset Request</h2>
             <p>You requested to reset your password. Click the link below to proceed:</p>

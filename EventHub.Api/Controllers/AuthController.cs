@@ -5,7 +5,6 @@ using EventHub.Api.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventHub.Api.Controllers;
 
@@ -48,9 +47,9 @@ public class AuthController : ControllerBase
             var result = await _authService.LoginAsync(dto);
             return Ok(result);
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            return Unauthorized(new { message = "Invalid username or password." });
+            return Unauthorized(new { message = ex.Message });
         }
     }
 

@@ -13,7 +13,7 @@ public class User
     public bool IsEmailConfirmed { get; set; }
     public string EmailConfirmationToken { get; set; }
     public DateTime EmailConfirmationTokenExpiry { get; set; }
-    public string PasswordResetToken { get; set; }
-    public DateTime PasswordResetTokenExpiry { get; set; }
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
 }
 
