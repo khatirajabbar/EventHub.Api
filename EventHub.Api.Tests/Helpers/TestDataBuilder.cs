@@ -80,6 +80,42 @@ public class TestDataBuilder
         };
     }
 
+    public static Organizer BuildOrganizer(int id = 1, string name = "Test Organizer", string email = "org@example.com")
+    {
+        return new Organizer 
+        {
+            Id = id,
+            Name = name,
+            Email = email,
+            Phone = "1234567890"
+        };
+    }
+
+    public static Event BuildEvent(int id = 1, int organizerId = 1, string title = "Test Event")
+    {
+        return new Event
+        {
+            Id = id,
+            Title = title,
+            Description = "Test event desc",
+            Date = DateTime.UtcNow.AddDays(10),
+            Location = "Test Location",
+            OrganizerId = organizerId
+        };
+    }
+
+    public static Ticket BuildTicket(int id = 1, int eventId = 1)
+    {
+        return new Ticket
+        {
+            Id = id,
+            EventId = eventId,
+            Type = EventHub.Api.Enums.TicketType.Standard,
+            Price = 50.0m,
+            QuantityAvailable = 100
+        };
+    }
+
     private static string HashPassword(string password)
     {
         using var sha256 = SHA256.Create();
@@ -87,4 +123,3 @@ public class TestDataBuilder
         return Convert.ToBase64String(hashedBytes);
     }
 }
-
