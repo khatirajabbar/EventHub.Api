@@ -1,0 +1,94 @@
+@model List<EventResponseDto>
+
+@{
+    ViewData["Title"] = "Events";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4">Events</h1>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var evt in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(evt.BannerImageUrl))
+                        {
+                            <img src="@evt.BannerImageUrl" class="card-img-top" alt="@evt.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-secondary" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-white">No Image</span>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@evt.Title</h5>
+                            <p class="card-text text-muted">
+                                <small>
+                                    <i class="far fa-calendar-alt"></i> @evt.Date.ToString("MMMM dd, yyyy")
+                                </small>
+                            </p>
+                            <p class="card-text text-muted">
+                                <small>
+                                    <i class="fas fa-map-marker-alt"></i> @evt.Location
+                                </small>
+                            </p>
+                            @if (!string.IsNullOrEmpty(evt.Description))
+                            {
+                                <p class="card-text">
+                                    @if (evt.Description.Length > 100)
+                                    {
+                                        @(evt.Description.Substring(0, 100) + "...")
+                                    }
+                                    else
+                                    {
+                                        @evt.Description
+                                    }
+                                </p>
+                            }
+                            @if (evt.Organizer != null)
+                            {
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        Organized by: <strong>@evt.Organizer.Name</strong>
+                                    </small>
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <a href="@Url.Action("Details", "Events", new { id = evt.Id })" class="btn btn-primary btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">No Events Found</h4>
+            <p>There are currently no events available. Check back later!</p>
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }
+</style>
+

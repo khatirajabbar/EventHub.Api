@@ -1,0 +1,95 @@
+@model EventResponseDto
+
+@{
+    ViewData["Title"] = Model?.Title ?? "Event Details";
+}
+
+<div class="container mt-5">
+    @if (Model != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <a href="@Url.Action("Index", "Events")" class="btn btn-outline-secondary mb-3">
+                    <i class="fas fa-arrow-left"></i> Back to Events
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+                    {
+                        <img src="@Model.BannerImageUrl" class="card-img-top" alt="@Model.Title" style="height: 400px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-secondary" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-white display-5">No Image Available</span>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h1 class="card-title display-5">@Model.Title</h1>
+                        
+                        <hr />
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Event Details</h5>
+                                <p>
+                                    <strong><i class="far fa-calendar-alt"></i> Date:</strong><br />
+                                    @Model.Date.ToString("dddd, MMMM dd, yyyy")
+                                </p>
+                                <p>
+                                    <strong><i class="fas fa-map-marker-alt"></i> Location:</strong><br />
+                                    @Model.Location
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Organizer</h5>
+                                @if (Model.Organizer != null)
+                                {
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            @if (!string.IsNullOrEmpty(Model.Organizer.LogoUrl))
+                                            {
+                                                <img src="@Model.Organizer.LogoUrl" alt="@Model.Organizer.Name" style="height: 60px; margin-bottom: 10px;">
+                                            }
+                                            <p><strong>@Model.Organizer.Name</strong></p>
+                                            <p class="text-muted">
+                                                <i class="fas fa-envelope"></i> @Model.Organizer.Email
+                                            </p>
+                                            @if (!string.IsNullOrEmpty(Model.Organizer.Phone))
+                                            {
+                                                <p class="text-muted">
+                                                    <i class="fas fa-phone"></i> @Model.Organizer.Phone
+                                                </p>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <hr />
+                            <h5>Description</h5>
+                            <p class="lead">@Model.Description</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Event Not Found</h4>
+            <p>The event you're looking for could not be found.</p>
+            <hr />
+            <a href="@Url.Action("Index", "Events")" class="btn btn-primary">Go Back to Events</a>
+        </div>
+    }
+</div>
+

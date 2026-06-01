@@ -51,7 +51,6 @@ public class EventsController : ControllerBase
 
     // GET /api/events
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var events = await _context.Events.Include(e => e.Organizer).ToListAsync();
@@ -62,7 +61,6 @@ public class EventsController : ControllerBase
 
     // GET /api/events/{id}
     [HttpGet("{id}")]
-    [Authorize]
     public async Task<IActionResult> GetById(int id)
     {
         var ev = await _context.Events.Include(e => e.Organizer).FirstOrDefaultAsync(e => e.Id == id);

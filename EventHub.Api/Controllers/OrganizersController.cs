@@ -47,7 +47,6 @@ public class OrganizersController : ControllerBase
 
     // GET /api/organizers
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var organizers = await _context.Organizers.ToListAsync();
@@ -58,7 +57,6 @@ public class OrganizersController : ControllerBase
 
     // GET /api/organizers/{id}
     [HttpGet("{id}")]
-    [Authorize]
     public async Task<IActionResult> GetById(int id)
     {
         var organizer = await _context.Organizers.FindAsync(id);
