@@ -1,9 +1,23 @@
 using EventHub.Web.Services;
+using EventHub.Web.Settings;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout";
+        options.AccessDeniedPath = "/Auth/AccessDenied";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Requires HTTPS
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+    });
 
 // Configure HttpClient for API communication
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5220";
@@ -15,6 +29,7 @@ builder.Services.AddHttpClient("EventHubApi", client =>
 
 // Register Services
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
@@ -27,16 +42,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
