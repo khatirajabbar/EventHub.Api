@@ -67,10 +67,9 @@ public class AuthController : Controller
 
         try
         {
-            var authResponse = await _authService.RegisterAsync(model);
-            await SignInUserAsync(authResponse);
-            
-            return RedirectToAction("Index", "Home");
+            var registerResponse = await _authService.RegisterAsync(model);
+            TempData["SuccessMessage"] = registerResponse.Message;
+            return RedirectToAction(nameof(Login));
         }
         catch (Exception ex)
         {
@@ -111,4 +110,3 @@ public class AuthController : Controller
         });
     }
 }
-

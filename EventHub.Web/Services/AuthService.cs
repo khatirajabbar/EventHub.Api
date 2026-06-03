@@ -39,7 +39,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<AuthResponseDto> RegisterAsync(RegisterViewModel model)
+    public async Task<RegisterResponseDto> RegisterAsync(RegisterViewModel model)
     {
         try
         {
@@ -54,7 +54,7 @@ public class AuthService : IAuthService
                 throw new Exception("Registration failed. Please try again.");
             }
 
-            return JsonSerializer.Deserialize<AuthResponseDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<RegisterResponseDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (Exception ex)
         {
@@ -63,4 +63,3 @@ public class AuthService : IAuthService
         }
     }
 }
-

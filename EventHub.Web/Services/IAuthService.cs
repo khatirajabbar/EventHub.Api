@@ -6,6 +6,5 @@ namespace EventHub.Web.Services;
 public interface IAuthService
 {
     Task<AuthResponseDto> LoginAsync(LoginViewModel model);
-    Task<AuthResponseDto> RegisterAsync(RegisterViewModel model);
+    Task<RegisterResponseDto> RegisterAsync(RegisterViewModel model);
 }
-

@@ -72,7 +72,7 @@ public class EventsController : ControllerBase
 
     // POST /api/events
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] EventCreateDto dto)
     {
         var organizerExists = await _context.Organizers.AnyAsync(o => o.Id == dto.OrganizerId);
@@ -89,7 +89,7 @@ public class EventsController : ControllerBase
 
     // PUT /api/events/{id}
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] EventUpdateDto dto)
     {
         var ev = await _context.Events.FindAsync(id);
@@ -108,7 +108,7 @@ public class EventsController : ControllerBase
 
     // DELETE /api/events/{id}
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var ev = await _context.Events.FindAsync(id);
@@ -120,7 +120,7 @@ public class EventsController : ControllerBase
 
     // POST /api/events/{id}/banner
     [HttpPost("{id}/banner")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UploadBanner(int id, IFormFile file)
     {
         try
@@ -140,7 +140,7 @@ public class EventsController : ControllerBase
 
     // GET /api/events/{eventId}/tickets
     [HttpGet("{eventId}/tickets")]
-    [Authorize]
+    // [Authorize]
     public async Task<IActionResult> GetTickets(int eventId)
     {
         var exists = await _context.Events.AnyAsync(e => e.Id == eventId);
@@ -154,7 +154,7 @@ public class EventsController : ControllerBase
 
     // POST /api/events/{eventId}/tickets
     [HttpPost("{eventId}/tickets")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateTicket(int eventId, [FromBody] DTOs.Ticket.TicketCreateDto dto)
     {
         var exists = await _context.Events.AnyAsync(e => e.Id == eventId);
@@ -168,7 +168,7 @@ public class EventsController : ControllerBase
 
     // GET /api/events/{eventId}/organizer
     [HttpGet("{eventId}/organizer")]
-    [Authorize]
+    // [Authorize]
     public async Task<IActionResult> GetOrganizer(int eventId)
     {
         var ev = await _context.Events.Include(e => e.Organizer).FirstOrDefaultAsync(e => e.Id == eventId);

@@ -1,29 +1,33 @@
 #!/bin/bash
+set -euo pipefail
 
-# EventHub Quick Start Script for macOS
-# This script starts both the API and Web projects in separate terminal windows
+# EventHub Quick Start Script for macOS.
+# Starts the API and Web projects in separate Terminal windows.
 
-echo "🚀 Starting EventHub Applications..."
+PROJECT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+run_in_terminal() {
+    local command="$1"
+
+    osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "cd \"$PROJECT_PATH\" && $command"
+end tell
+EOF
+}
+
+echo "Starting EventHub applications..."
 echo ""
 
-PROJECT_PATH="/Users/khatira/Desktop/EventHub.Api"
-
-# Open API in a new terminal window
-open -a Terminal "$PROJECT_PATH" --args "cd $PROJECT_PATH && dotnet run --project EventHub.Api/EventHub.Api.csproj"
-
-# Wait 2 seconds to let API start
+run_in_terminal "dotnet run --project EventHub.Api/EventHub.Api.csproj --launch-profile http"
 sleep 2
+run_in_terminal "dotnet run --project EventHub.Web/EventHub.Web.csproj --launch-profile http"
 
-# Open Web in another terminal window
-open -a Terminal "$PROJECT_PATH" --args "cd $PROJECT_PATH && dotnet run --project EventHub.Web/EventHub.Web.csproj"
-
+echo "Applications are starting in separate Terminal windows."
 echo ""
-echo "✅ Applications are starting..."
+echo "Web UI:     http://localhost:5198"
+echo "API:        http://localhost:5220"
+echo "Swagger:    http://localhost:5220/swagger"
 echo ""
-echo "📍 Web UI will be available at:     http://localhost:5198"
-echo "📍 API will be available at:        http://localhost:5220"
-echo "📍 API Documentation (Swagger) at: http://localhost:5220/swagger"
-echo ""
-echo "📌 Tip: The terminal windows may take a few seconds to open and start the apps."
-echo "   If you don't see the output, check the terminal windows."
-
+echo "If a URL does not open, check the matching Terminal window for errors."
