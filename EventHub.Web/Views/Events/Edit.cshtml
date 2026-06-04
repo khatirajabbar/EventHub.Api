@@ -100,8 +100,10 @@
         </div>
 
         <div class="form-group">
-            <label asp-for="OrganizerId">Organizer ID</label>
-            <input asp-for="OrganizerId" type="number" />
+            <label asp-for="OrganizerId">Organizer</label>
+            <select asp-for="OrganizerId" 
+                    asp-items="@(new SelectList(ViewBag.Organizers, "Id", "Name"))">
+            </select>
             <span asp-validation-for="OrganizerId" class="validation-message"></span>
         </div>
 

@@ -54,8 +54,9 @@ public class EventsController : Controller
     // ─── Admin Actions ────────────────────────────────────────────────────────
 
     //[Authorize(Roles = "Admin")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        ViewBag.Organizers = await _eventService.GetAllOrganizersAsync();
         return View();
     }
 
@@ -65,7 +66,10 @@ public class EventsController : Controller
     public async Task<IActionResult> Create(EventCreateDto dto)
     {
         if (!ModelState.IsValid)
+        {
+            ViewBag.Organizers = await _eventService.GetAllOrganizersAsync();
             return View(dto);
+        }
 
         var created = await _eventService.CreateEventAsync(dto);
         if (created == null)
@@ -81,6 +85,7 @@ public class EventsController : Controller
     //[Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
+        var organizers = await _eventService.GetAllOrganizersAsync();
         var @event = await _eventService.GetEventByIdAsync(id);
         if (@event == null)
             return NotFound();
@@ -96,6 +101,8 @@ public class EventsController : Controller
         };
 
         ViewBag.EventId = id;
+        ViewBag.OrganizerName = @event.Organizer?.Name;
+        ViewBag.Organizers = await _eventService.GetAllOrganizersAsync(); // add this
         return View(dto);
     }
 
@@ -107,6 +114,7 @@ public class EventsController : Controller
         if (!ModelState.IsValid)
         {
             ViewBag.EventId = id;
+            ViewBag.Organizers = await _eventService.GetAllOrganizersAsync();
             return View(dto);
         }
 

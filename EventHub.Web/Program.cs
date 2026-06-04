@@ -31,6 +31,7 @@ builder.Services.AddHttpClient("EventHubApi", client =>
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -39,6 +40,10 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+app.UseCors(policy => policy
+    .WithOrigins("http://localhost:5198")
+    .AllowAnyMethod()
+    .AllowAnyHeader());
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -7,6 +7,7 @@ namespace EventHub.Web.Services;
 public interface IEventService
 {
     Task<List<EventResponseDto>> GetAllEventsAsync();
+    Task<List<OrganizerResponseDto>> GetAllOrganizersAsync();
     Task<EventResponseDto> GetEventByIdAsync(int id);
     Task<EventResponseDto> CreateEventAsync(EventCreateDto eventDto);
     Task<EventResponseDto> UpdateEventAsync(int id, EventUpdateDto eventDto);

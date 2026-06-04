@@ -180,4 +180,21 @@ public class EventService : IEventService
             return new List<TicketResponseDto>();
         }
     }
+    public async Task<List<OrganizerResponseDto>> GetAllOrganizersAsync()
+    {
+        try
+        {
+            var client = CreateAuthorizedClient();
+            var response = await client.GetAsync("/api/organizers");
+            if (!response.IsSuccessStatusCode) return new List<OrganizerResponseDto>();
+            var json = await response.Content.ReadAsStringAsync();
+            return System.Text.Json.JsonSerializer.Deserialize<List<OrganizerResponseDto>>(json, JsonOptions)
+                   ?? new List<OrganizerResponseDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching organizers");
+            return new List<OrganizerResponseDto>();
+        }
+    }
 }

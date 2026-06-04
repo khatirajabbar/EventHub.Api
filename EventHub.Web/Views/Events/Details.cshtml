@@ -400,9 +400,9 @@
                     foreach (var ticket in tickets)
                     {
                         <div class="ticket-row">
-                            <div class="ticket-type">@ticket.TicketType</div>
+                            <div class="ticket-type">@ticket.Type</div>
                             <div class="ticket-info">
-                                <span class="ticket-avail">@ticket.AvailableQuantity left</span>
+                                <span class="ticket-avail">@ticket.QuantityAvailable left</span>
                                 <span class="ticket-price">
                                     @(ticket.Price == 0 ? "Free" : $"${ticket.Price:F2}")
                                 </span>
