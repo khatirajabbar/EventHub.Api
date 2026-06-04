@@ -1,120 +1,136 @@
 using EventHub.Web.Models.DTOs;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 
 namespace EventHub.Web.Services;
 
 public class EventService : IEventService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<EventService> _logger;
 
-    public EventService(IHttpClientFactory httpClientFactory, ILogger<EventService> logger)
+    public EventService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, ILogger<EventService> logger)
     {
-        _httpClient = httpClientFactory.CreateClient("EventHubApi");
+        _httpClientFactory = httpClientFactory;
+        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
+
+    // Creates an HttpClient and attaches the JWT token from the logged-in user's cookie claims
+    private HttpClient CreateAuthorizedClient()
+    {
+        var client = _httpClientFactory.CreateClient("EventHubApi");
+
+        var token = _httpContextAccessor.HttpContext?.User?.FindFirst("Token")?.Value;
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return client;
+    }
+
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions =
+        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     public async Task<List<EventResponseDto>> GetAllEventsAsync()
     {
         try
         {
-            var response = await _httpClient.GetAsync("/api/events");
-            
+            var client = CreateAuthorizedClient();
+            var response = await client.GetAsync("/api/events");
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to fetch events. Status code: {response.StatusCode}");
+                _logger.LogError("Failed to fetch events. Status code: {StatusCode}", response.StatusCode);
                 return new List<EventResponseDto>();
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var events = System.Text.Json.JsonSerializer.Deserialize<List<EventResponseDto>>(json, 
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            return events ?? new List<EventResponseDto>();
+            return System.Text.Json.JsonSerializer.Deserialize<List<EventResponseDto>>(json, JsonOptions)
+                   ?? new List<EventResponseDto>();
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error fetching events: {ex.Message}");
+            _logger.LogError(ex, "Error fetching events");
             return new List<EventResponseDto>();
         }
     }
 
-    public async Task<EventResponseDto> GetEventByIdAsync(int id)
+    public async Task<EventResponseDto?> GetEventByIdAsync(int id)
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/events/{id}");
-            
+            var client = CreateAuthorizedClient();
+            var response = await client.GetAsync($"/api/events/{id}");
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to fetch event {id}. Status code: {response.StatusCode}");
+                _logger.LogError("Failed to fetch event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return null;
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var @event = System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(json,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            return @event;
+            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(json, JsonOptions);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error fetching event {id}: {ex.Message}");
+            _logger.LogError(ex, "Error fetching event {Id}", id);
             return null;
         }
     }
 
-    public async Task<EventResponseDto> CreateEventAsync(EventCreateDto eventDto)
+    public async Task<EventResponseDto?> CreateEventAsync(EventCreateDto eventDto)
     {
         try
         {
+            var client = CreateAuthorizedClient();
             var json = System.Text.Json.JsonSerializer.Serialize(eventDto);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PostAsync("/api/events", content);
-            
+
+            var response = await client.PostAsync("/api/events", content);
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to create event. Status code: {response.StatusCode}");
+                _logger.LogError("Failed to create event. Status code: {StatusCode}", response.StatusCode);
                 return null;
             }
 
             var responseJson = await response.Content.ReadAsStringAsync();
-            var createdEvent = System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            return createdEvent;
+            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson, JsonOptions);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error creating event: {ex.Message}");
+            _logger.LogError(ex, "Error creating event");
             return null;
         }
     }
 
-    public async Task<EventResponseDto> UpdateEventAsync(int id, EventUpdateDto eventDto)
+    public async Task<EventResponseDto?> UpdateEventAsync(int id, EventUpdateDto eventDto)
     {
         try
         {
+            var client = CreateAuthorizedClient();
             var json = System.Text.Json.JsonSerializer.Serialize(eventDto);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PutAsync($"/api/events/{id}", content);
-            
+
+            var response = await client.PutAsync($"/api/events/{id}", content);
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to update event {id}. Status code: {response.StatusCode}");
+                _logger.LogError("Failed to update event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return null;
             }
 
             var responseJson = await response.Content.ReadAsStringAsync();
-            var updatedEvent = System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            return updatedEvent;
+            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson, JsonOptions);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error updating event {id}: {ex.Message}");
+            _logger.LogError(ex, "Error updating event {Id}", id);
             return null;
         }
     }
@@ -123,11 +139,12 @@ public class EventService : IEventService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"/api/events/{id}");
-            
+            var client = CreateAuthorizedClient();
+            var response = await client.DeleteAsync($"/api/events/{id}");
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to delete event {id}. Status code: {response.StatusCode}");
+                _logger.LogError("Failed to delete event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return false;
             }
 
@@ -135,9 +152,32 @@ public class EventService : IEventService
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error deleting event {id}: {ex.Message}");
+            _logger.LogError(ex, "Error deleting event {Id}", id);
             return false;
         }
     }
-}
 
+    public async Task<List<TicketResponseDto>> GetTicketsByEventIdAsync(int eventId)
+    {
+        try
+        {
+            var client = CreateAuthorizedClient();
+            var response = await client.GetAsync($"/api/events/{eventId}/tickets");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to fetch tickets for event {EventId}. Status code: {StatusCode}", eventId, response.StatusCode);
+                return new List<TicketResponseDto>();
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            return System.Text.Json.JsonSerializer.Deserialize<List<TicketResponseDto>>(json, JsonOptions)
+                   ?? new List<TicketResponseDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching tickets for event {EventId}", eventId);
+            return new List<TicketResponseDto>();
+        }
+    }
+}

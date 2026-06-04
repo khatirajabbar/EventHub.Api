@@ -1,94 +1,389 @@
-@model List<EventResponseDto>
+@model List<EventHub.Web.Models.DTOs.EventResponseDto>
 
 @{
     ViewData["Title"] = "Events";
 }
 
-<div class="container mt-5">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="display-4">Events</h1>
+<style>
+    :root {
+        --ink: #0a0a0a;
+        --paper: #f5f2eb;
+        --accent: #e8401a;
+        --muted: #888880;
+        --border: #d0cdc4;
+        --card-bg: #faf8f4;
+    }
+
+    body {
+        background: var(--paper);
+        color: var(--ink);
+    }
+
+    .events-header {
+        padding: 64px 0 40px;
+        border-bottom: 2px solid var(--ink);
+        margin-bottom: 0;
+    }
+
+    .events-header-inner {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .events-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+
+    .events-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .events-count {
+        font-family: 'DM Mono', monospace;
+        font-size: 13px;
+        color: var(--muted);
+        align-self: flex-end;
+        padding-bottom: 6px;
+    }
+
+    .events-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 0;
+    }
+
+    .event-card {
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        background: var(--card-bg);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        transition: background 0.15s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .event-card:hover {
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .event-card:hover .card-arrow {
+        transform: translate(3px, -3px);
+    }
+
+    .event-card:nth-child(3n+1) {
+        border-left: 1px solid var(--border);
+    }
+
+    .card-image {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(15%);
+        transition: filter 0.3s ease;
+    }
+
+    .event-card:hover .card-image {
+        filter: grayscale(0%);
+    }
+
+    .card-image-placeholder {
+        width: 100%;
+        height: 220px;
+        background: linear-gradient(135deg, #e8e5de 0%, #d4d0c8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-image-placeholder span {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .card-body {
+        padding: 24px 24px 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .card-date {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        text-transform: uppercase;
+    }
+
+    .card-location {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .card-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        margin: 0 0 10px;
+        flex: 1;
+    }
+
+    .card-desc {
+        font-family: 'Lora', serif;
+        font-size: 0.875rem;
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 0 0 16px;
+    }
+
+    .card-footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .card-organizer {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+    }
+
+    .card-arrow {
+        font-size: 18px;
+        color: var(--ink);
+        transition: transform 0.2s ease;
+        line-height: 1;
+    }
+
+    .events-grid-wrapper {
+        border-top: 1px solid var(--border);
+        margin-top: -1px;
+    }
+
+    .empty-state {
+        padding: 80px 0;
+        text-align: center;
+        border-top: 1px solid var(--border);
+    }
+
+    .empty-state-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        color: var(--ink);
+        margin-bottom: 8px;
+    }
+
+    .empty-state-sub {
+        font-family: 'Lora', serif;
+        color: var(--muted);
+        font-size: 0.95rem;
+    }
+
+    /* Admin bar */
+    .admin-bar {
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 0;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+    }
+
+    .admin-bar a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.7;
+        transition: opacity 0.15s;
+    }
+
+    .admin-bar a:hover {
+        opacity: 1;
+    }
+
+    .btn-create {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 10px 20px;
+        text-decoration: none;
+        transition: background 0.15s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-create:hover {
+        background: #c73415;
+        color: #fff;
+        text-decoration: none;
+    }
+
+    /* Stagger animation */
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .event-card {
+        animation: fadeUp 0.4s ease both;
+    }
+
+    .event-card:nth-child(1)  { animation-delay: 0.05s; }
+    .event-card:nth-child(2)  { animation-delay: 0.1s; }
+    .event-card:nth-child(3)  { animation-delay: 0.15s; }
+    .event-card:nth-child(4)  { animation-delay: 0.2s; }
+    .event-card:nth-child(5)  { animation-delay: 0.25s; }
+    .event-card:nth-child(6)  { animation-delay: 0.3s; }
+    .event-card:nth-child(7)  { animation-delay: 0.35s; }
+    .event-card:nth-child(8)  { animation-delay: 0.4s; }
+    .event-card:nth-child(9)  { animation-delay: 0.45s; }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&family=Lora&display=swap" rel="stylesheet">
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="admin-bar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <span>Admin Panel</span>
+            <a href="@Url.Action("Create", "Events")" class="btn-create">+ New Event</a>
         </div>
     </div>
+}
 
-    @if (Model != null && Model.Any())
-    {
-        <div class="row">
-            @foreach (var evt in Model)
+<div class="container">
+    <div class="events-header">
+        <div class="events-header-inner">
+            <div>
+                <p class="events-label">Upcoming</p>
+                <h1 class="events-title">Events</h1>
+            </div>
+            @if (Model != null && Model.Any())
             {
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
+                <span class="events-count">@Model.Count event@(Model.Count == 1 ? "" : "s")</span>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="container mt-3">
+        <div style="background:#e8f5e9; border:1px solid #a5d6a7; padding:12px 20px; font-family:'DM Mono',monospace; font-size:13px;">
+            ✓ @TempData["SuccessMessage"]
+        </div>
+    </div>
+}
+
+@if (Model != null && Model.Any())
+{
+    <div class="container px-0">
+        <div class="events-grid-wrapper">
+            <div class="events-grid">
+                @foreach (var evt in Model)
+                {
+                    <a href="@Url.Action("Details", "Events", new { id = evt.Id })" class="event-card">
                         @if (!string.IsNullOrEmpty(evt.BannerImageUrl))
                         {
-                            <img src="@evt.BannerImageUrl" class="card-img-top" alt="@evt.Title" style="height: 200px; object-fit: cover;">
+                            <img src="@evt.BannerImageUrl" class="card-image" alt="@evt.Title">
                         }
                         else
                         {
-                            <div class="card-img-top bg-secondary" style="height: 200px; display: flex; align-items: center; justify-content: center;">
-                                <span class="text-white">No Image</span>
+                            <div class="card-image-placeholder">
+                                <span>No image</span>
                             </div>
                         }
                         <div class="card-body">
-                            <h5 class="card-title">@evt.Title</h5>
-                            <p class="card-text text-muted">
-                                <small>
-                                    <i class="far fa-calendar-alt"></i> @evt.Date.ToString("MMMM dd, yyyy")
-                                </small>
-                            </p>
-                            <p class="card-text text-muted">
-                                <small>
-                                    <i class="fas fa-map-marker-alt"></i> @evt.Location
-                                </small>
-                            </p>
+                            <div class="card-meta">
+                                <span class="card-date">@evt.Date.ToString("MMM dd, yyyy")</span>
+                                <span class="card-location">@evt.Location</span>
+                            </div>
+                            <h2 class="card-title">@evt.Title</h2>
                             @if (!string.IsNullOrEmpty(evt.Description))
                             {
-                                <p class="card-text">
-                                    @if (evt.Description.Length > 100)
-                                    {
-                                        @(evt.Description.Substring(0, 100) + "...")
-                                    }
-                                    else
-                                    {
-                                        @evt.Description
-                                    }
+                                <p class="card-desc">
+                                    @(evt.Description.Length > 90 ? evt.Description.Substring(0, 90) + "…" : evt.Description)
                                 </p>
                             }
-                            @if (evt.Organizer != null)
-                            {
-                                <p class="card-text">
-                                    <small class="text-muted">
-                                        Organized by: <strong>@evt.Organizer.Name</strong>
-                                    </small>
-                                </p>
-                            }
+                            <div class="card-footer-row">
+                                @if (evt.Organizer != null)
+                                {
+                                    <span class="card-organizer">by @evt.Organizer.Name</span>
+                                }
+                                else
+                                {
+                                    <span></span>
+                                }
+                                <span class="card-arrow">↗</span>
+                            </div>
                         </div>
-                        <div class="card-footer bg-white border-top-0">
-                            <a href="@Url.Action("Details", "Events", new { id = evt.Id })" class="btn btn-primary btn-sm w-100">
-                                View Details
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            }
+                    </a>
+                }
+            </div>
         </div>
-    }
-    else
-    {
-        <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading">No Events Found</h4>
-            <p>There are currently no events available. Check back later!</p>
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="empty-state">
+            <p class="empty-state-label">Nothing here yet</p>
+            <h2 class="empty-state-title">No events scheduled</h2>
+            <p class="empty-state-sub">Check back soon — something is coming.</p>
         </div>
-    }
-</div>
-
-<style>
-    .card {
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-    }
-</style>
-
+    </div>
+}

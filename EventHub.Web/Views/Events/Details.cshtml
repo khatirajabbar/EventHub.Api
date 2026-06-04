@@ -1,95 +1,432 @@
-@model EventResponseDto
+@model EventHub.Web.Models.DTOs.EventResponseDto
+@using EventHub.Web.Models.DTOs
 
 @{
     ViewData["Title"] = Model?.Title ?? "Event Details";
+    var tickets = ViewBag.Tickets as List<TicketResponseDto> ?? new List<TicketResponseDto>();
 }
 
-<div class="container mt-5">
-    @if (Model != null)
+<style>
+    :root {
+        --ink: #0a0a0a;
+        --paper: #f5f2eb;
+        --accent: #e8401a;
+        --muted: #888880;
+        --border: #d0cdc4;
+        --card-bg: #faf8f4;
+    }
+
+    body { background: var(--paper); color: var(--ink); }
+
+    .detail-back {
+        padding: 24px 0 0;
+    }
+
+    .back-link {
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: color 0.15s;
+    }
+
+    .back-link:hover { color: var(--ink); text-decoration: none; }
+
+    .detail-hero {
+        width: 100%;
+        max-height: 480px;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(10%);
+        margin: 32px 0 0;
+    }
+
+    .detail-hero-placeholder {
+        width: 100%;
+        height: 320px;
+        background: linear-gradient(135deg, #e8e5de, #d4d0c8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 32px 0 0;
+    }
+
+    .detail-hero-placeholder span {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .detail-layout {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 0;
+        border-top: 2px solid var(--ink);
+        margin-top: 48px;
+        align-items: start;
+    }
+
+    .detail-main {
+        padding: 40px 48px 40px 0;
+        border-right: 1px solid var(--border);
+    }
+
+    .detail-sidebar {
+        padding: 40px 0 40px 40px;
+    }
+
+    .detail-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+
+    .detail-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin: 0 0 32px;
+    }
+
+    .detail-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 32px;
+        padding: 24px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 32px;
+    }
+
+    .detail-meta-item label {
+        display: block;
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .detail-meta-item span {
+        font-family: 'Lora', serif;
+        font-size: 1rem;
+        color: var(--ink);
+    }
+
+    .detail-meta-item .accent {
+        font-family: 'DM Mono', monospace;
+        font-size: 0.95rem;
+        color: var(--accent);
+        font-weight: 500;
+    }
+
+    .detail-description {
+        font-family: 'Lora', serif;
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: #333;
+    }
+
+    /* Sidebar - organizer */
+    .organizer-block {
+        border: 1px solid var(--border);
+        padding: 24px;
+        background: var(--card-bg);
+        margin-bottom: 24px;
+    }
+
+    .organizer-logo {
+        height: 48px;
+        object-fit: contain;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .organizer-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .organizer-contact {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        line-height: 1.8;
+    }
+
+    /* Tickets */
+    .tickets-heading {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .ticket-row {
+        border: 1px solid var(--border);
+        background: var(--card-bg);
+        padding: 16px 20px;
+        margin-bottom: 8px;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    .ticket-row:hover {
+        background: #fff;
+        border-color: var(--ink);
+    }
+
+    .ticket-type {
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .ticket-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ticket-avail {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .ticket-price {
+        font-family: 'DM Mono', monospace;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--accent);
+    }
+
+    .btn-get-ticket {
+        display: block;
+        width: 100%;
+        background: var(--ink);
+        color: #fff;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 14px 20px;
+        text-align: center;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.15s;
+    }
+
+    .btn-get-ticket:hover {
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .no-tickets {
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        color: var(--muted);
+        padding: 16px 0;
+        letter-spacing: 0.05em;
+    }
+
+    /* Admin controls */
+    .admin-controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .btn-admin {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 9px 16px;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--ink);
+        transition: all 0.15s;
+    }
+
+    .btn-admin:hover { background: var(--ink); color: #fff; border-color: var(--ink); text-decoration: none; }
+
+    .btn-admin-delete {
+        border-color: #e53935;
+        color: #e53935;
+    }
+
+    .btn-admin-delete:hover { background: #e53935; color: #fff; border-color: #e53935; }
+
+    @@media (max-width: 768px) {
+        .detail-layout {
+            grid-template-columns: 1fr;
+        }
+        .detail-main {
+            padding: 32px 0;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .detail-sidebar {
+            padding: 32px 0;
+        }
+    }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&family=Lora&display=swap" rel="stylesheet">
+
+@if (Model != null)
+{
+    <div class="container">
+        <div class="detail-back">
+            <a href="@Url.Action("Index", "Events")" class="back-link">← All Events</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
     {
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <a href="@Url.Action("Index", "Events")" class="btn btn-outline-secondary mb-3">
-                    <i class="fas fa-arrow-left"></i> Back to Events
-                </a>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card shadow-sm mb-4">
-                    @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
-                    {
-                        <img src="@Model.BannerImageUrl" class="card-img-top" alt="@Model.Title" style="height: 400px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="card-img-top bg-secondary" style="height: 400px; display: flex; align-items: center; justify-content: center;">
-                            <span class="text-white display-5">No Image Available</span>
-                        </div>
-                    }
-                    <div class="card-body">
-                        <h1 class="card-title display-5">@Model.Title</h1>
-                        
-                        <hr />
-
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <h5 class="mb-3">Event Details</h5>
-                                <p>
-                                    <strong><i class="far fa-calendar-alt"></i> Date:</strong><br />
-                                    @Model.Date.ToString("dddd, MMMM dd, yyyy")
-                                </p>
-                                <p>
-                                    <strong><i class="fas fa-map-marker-alt"></i> Location:</strong><br />
-                                    @Model.Location
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <h5 class="mb-3">Organizer</h5>
-                                @if (Model.Organizer != null)
-                                {
-                                    <div class="card bg-light">
-                                        <div class="card-body">
-                                            @if (!string.IsNullOrEmpty(Model.Organizer.LogoUrl))
-                                            {
-                                                <img src="@Model.Organizer.LogoUrl" alt="@Model.Organizer.Name" style="height: 60px; margin-bottom: 10px;">
-                                            }
-                                            <p><strong>@Model.Organizer.Name</strong></p>
-                                            <p class="text-muted">
-                                                <i class="fas fa-envelope"></i> @Model.Organizer.Email
-                                            </p>
-                                            @if (!string.IsNullOrEmpty(Model.Organizer.Phone))
-                                            {
-                                                <p class="text-muted">
-                                                    <i class="fas fa-phone"></i> @Model.Organizer.Phone
-                                                </p>
-                                            }
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(Model.Description))
-                        {
-                            <hr />
-                            <h5>Description</h5>
-                            <p class="lead">@Model.Description</p>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
+        <img src="@Model.BannerImageUrl" class="detail-hero" alt="@Model.Title">
     }
     else
     {
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Event Not Found</h4>
-            <p>The event you're looking for could not be found.</p>
-            <hr />
-            <a href="@Url.Action("Index", "Events")" class="btn btn-primary">Go Back to Events</a>
+        <div class="detail-hero-placeholder">
+            <span>No image</span>
         </div>
     }
-</div>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="container mt-3">
+            <div style="background:#e8f5e9; border:1px solid #a5d6a7; padding:12px 20px; font-family:'DM Mono',monospace; font-size:13px;">
+                ✓ @TempData["SuccessMessage"]
+            </div>
+        </div>
+    }
+
+    <div class="container">
+        <div class="detail-layout">
+
+            <!-- Main content -->
+            <div class="detail-main">
+                <p class="detail-label">Event</p>
+                <h1 class="detail-title">@Model.Title</h1>
+
+                <div class="detail-meta-row">
+                    <div class="detail-meta-item">
+                        <label>Date</label>
+                        <span class="accent">@Model.Date.ToString("dddd, MMMM dd, yyyy")</span>
+                    </div>
+                    <div class="detail-meta-item">
+                        <label>Location</label>
+                        <span>@Model.Location</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="detail-description">
+                        @Model.Description
+                    </div>
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="admin-controls">
+                        <a href="@Url.Action("Edit", "Events", new { id = Model.Id })" class="btn-admin">Edit Event</a>
+                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin:0"
+                              onsubmit="return confirm('Delete this event?')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-admin btn-admin-delete">Delete</button>
+                        </form>
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar -->
+            <div class="detail-sidebar">
+
+                @if (Model.Organizer != null)
+                {
+                    <div class="organizer-block">
+                        <div class="detail-label" style="margin-bottom:16px">Organizer</div>
+                        @if (!string.IsNullOrEmpty(Model.Organizer.LogoUrl))
+                        {
+                            <img src="@Model.Organizer.LogoUrl" class="organizer-logo" alt="@Model.Organizer.Name">
+                        }
+                        <div class="organizer-name">@Model.Organizer.Name</div>
+                        <div class="organizer-contact">
+                            @Model.Organizer.Email
+                            @if (!string.IsNullOrEmpty(Model.Organizer.Phone))
+                            {
+                                <br>@Model.Organizer.Phone
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Tickets section -->
+                <div class="tickets-heading">Tickets</div>
+
+                @if (tickets.Any())
+                {
+                    foreach (var ticket in tickets)
+                    {
+                        <div class="ticket-row">
+                            <div class="ticket-type">@ticket.TicketType</div>
+                            <div class="ticket-info">
+                                <span class="ticket-avail">@ticket.AvailableQuantity left</span>
+                                <span class="ticket-price">
+                                    @(ticket.Price == 0 ? "Free" : $"${ticket.Price:F2}")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    <button class="btn-get-ticket">Get Tickets</button>
+                }
+                else
+                {
+                    <p class="no-tickets">No tickets listed yet.</p>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container mt-5">
+        <div style="border:1px solid var(--border); padding:40px; text-align:center;">
+            <p style="font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted);">404</p>
+            <h2 style="font-family:'Playfair Display',serif; font-size:2rem;">Event not found</h2>
+            <a href="@Url.Action("Index", "Events")" style="font-family:'DM Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase;">← Back to events</a>
+        </div>
+    </div>
+}

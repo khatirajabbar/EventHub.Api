@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using EventHub.Web.Models.DTOs;
 using EventHub.Web.Services;
 
@@ -24,7 +25,7 @@ public class EventsController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error loading events: {ex.Message}");
+            _logger.LogError(ex, "Error loading events");
             return RedirectToAction("Error", "Home");
         }
     }
@@ -35,16 +36,105 @@ public class EventsController : Controller
         {
             var @event = await _eventService.GetEventByIdAsync(id);
             if (@event == null)
-            {
                 return NotFound();
-            }
+
+            // Load tickets and store in ViewBag
+            var tickets = await _eventService.GetTicketsByEventIdAsync(id);
+            ViewBag.Tickets = tickets;
+
             return View(@event);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error loading event {id}: {ex.Message}");
+            _logger.LogError(ex, "Error loading event {Id}", id);
             return RedirectToAction("Error", "Home");
         }
     }
-}
 
+    // ─── Admin Actions ────────────────────────────────────────────────────────
+
+    //[Authorize(Roles = "Admin")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    //[Authorize(Roles = "Admin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(EventCreateDto dto)
+    {
+        if (!ModelState.IsValid)
+            return View(dto);
+
+        var created = await _eventService.CreateEventAsync(dto);
+        if (created == null)
+        {
+            ModelState.AddModelError(string.Empty, "Failed to create event. Please try again.");
+            return View(dto);
+        }
+
+        TempData["SuccessMessage"] = "Event created successfully!";
+        return RedirectToAction(nameof(Details), new { id = created.Id });
+    }
+
+    //[Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var @event = await _eventService.GetEventByIdAsync(id);
+        if (@event == null)
+            return NotFound();
+
+        var dto = new EventUpdateDto
+        {
+            Title = @event.Title,
+            Description = @event.Description,
+            Date = @event.Date,
+            Location = @event.Location,
+            BannerImageUrl = @event.BannerImageUrl,
+            OrganizerId = @event.OrganizerId
+        };
+
+        ViewBag.EventId = id;
+        return View(dto);
+    }
+
+    //[Authorize(Roles = "Admin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, EventUpdateDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.EventId = id;
+            return View(dto);
+        }
+
+        var updated = await _eventService.UpdateEventAsync(id, dto);
+        if (updated == null)
+        {
+            ModelState.AddModelError(string.Empty, "Failed to update event. Please try again.");
+            ViewBag.EventId = id;
+            return View(dto);
+        }
+
+        TempData["SuccessMessage"] = "Event updated successfully!";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    //[Authorize(Roles = "Admin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var success = await _eventService.DeleteEventAsync(id);
+        if (!success)
+        {
+            TempData["ErrorMessage"] = "Failed to delete event.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        TempData["SuccessMessage"] = "Event deleted successfully!";
+        return RedirectToAction(nameof(Index));
+    }
+}

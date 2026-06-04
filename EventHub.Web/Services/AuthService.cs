@@ -19,6 +19,8 @@ public class AuthService : IAuthService
     {
         try
         {
+            _logger.LogInformation("Base address: {BaseAddress}", _httpClient.BaseAddress);
+
             var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/auth/login", content);
 
