@@ -12,8 +12,30 @@ public static class DbSeeder
         if (!context.Users.Any())
         {
             context.Users.AddRange(
-                new User { Username = "admin", Email = "admin@eventhub.com", PasswordHash = HashPassword("Admin@123"), Role = "Admin", CreatedAt = DateTime.UtcNow },
-                new User { Username = "member", Email = "member@eventhub.com", PasswordHash = HashPassword("Member@123"), Role = "Member", CreatedAt = DateTime.UtcNow }
+                new User 
+                { 
+                    Username = "admin", 
+                    Email = "admin@eventhub.com", 
+                    PasswordHash = HashPassword("Admin@123"), 
+                    Role = "Admin", 
+                    CreatedAt = DateTime.UtcNow,
+                    IsEmailConfirmed = true,
+                    RefreshToken = string.Empty,
+                    EmailConfirmationToken = string.Empty,
+                    PasswordResetToken = string.Empty
+                },
+                new User 
+                { 
+                    Username = "member", 
+                    Email = "member@eventhub.com", 
+                    PasswordHash = HashPassword("Member@123"), 
+                    Role = "Member", 
+                    CreatedAt = DateTime.UtcNow,
+                    IsEmailConfirmed = true,
+                    RefreshToken = string.Empty,
+                    EmailConfirmationToken = string.Empty,
+                    PasswordResetToken = string.Empty
+                }
             );
             context.SaveChanges();
         }
@@ -31,12 +53,12 @@ public static class DbSeeder
         if (!context.Events.Any())
         {
             context.Events.AddRange(
-                new Event { Title = "Tech Conference 2026", Description = "Annual technology conference covering AI, cloud and software development.", Date = new DateTime(2026, 7, 15), Location = "Baku Convention Center, Baku", OrganizerId = 1 },
-                new Event { Title = "AI & Machine Learning Summit", Description = "Deep dive into the latest trends in artificial intelligence and ML.", Date = new DateTime(2026, 9, 20), Location = "ADA University, Baku", OrganizerId = 1 },
-                new Event { Title = "Design & UX Workshop", Description = "Hands-on workshop for UI/UX designers and product teams.", Date = new DateTime(2026, 6, 10), Location = "Creative Hub, Nizami Street, Baku", OrganizerId = 2 },
-                new Event { Title = "Photography Exhibition 2026", Description = "Annual exhibition showcasing the best local and international photography.", Date = new DateTime(2026, 8, 5), Location = "Baku Museum of Modern Art", OrganizerId = 2 },
-                new Event { Title = "Startup Pitch Night", Description = "Early stage startups pitch to investors and industry mentors.", Date = new DateTime(2026, 6, 25), Location = "Startup Hub Baku, Əliağa Vahid str.", OrganizerId = 3 },
-                new Event { Title = "Entrepreneurship Bootcamp", Description = "3-day intensive bootcamp for aspiring entrepreneurs and founders.", Date = new DateTime(2026, 10, 3), Location = "SABAH Center, Baku", OrganizerId = 3 }
+                new Event { Title = "Tech Conference 2026", Description = "Annual technology conference covering AI, cloud and software development.", Date = new DateTime(2026, 7, 15, 0, 0, 0, DateTimeKind.Utc), Location = "Baku Convention Center, Baku", OrganizerId = 1 },
+                new Event { Title = "AI & Machine Learning Summit", Description = "Deep dive into the latest trends in artificial intelligence and ML.", Date = new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc), Location = "ADA University, Baku", OrganizerId = 1 },
+                new Event { Title = "Design & UX Workshop", Description = "Hands-on workshop for UI/UX designers and product teams.", Date = new DateTime(2026, 6, 10, 0, 0, 0, DateTimeKind.Utc), Location = "Creative Hub, Nizami Street, Baku", OrganizerId = 2 },
+                new Event { Title = "Photography Exhibition 2026", Description = "Annual exhibition showcasing the best local and international photography.", Date = new DateTime(2026, 8, 5, 0, 0, 0, DateTimeKind.Utc), Location = "Baku Museum of Modern Art", OrganizerId = 2 },
+                new Event { Title = "Startup Pitch Night", Description = "Early stage startups pitch to investors and industry mentors.", Date = new DateTime(2026, 6, 25, 0, 0, 0, DateTimeKind.Utc), Location = "Startup Hub Baku, Əliağa Vahid str.", OrganizerId = 3 },
+                new Event { Title = "Entrepreneurship Bootcamp", Description = "3-day intensive bootcamp for aspiring entrepreneurs and founders.", Date = new DateTime(2026, 10, 3, 0, 0, 0, DateTimeKind.Utc), Location = "SABAH Center, Baku", OrganizerId = 3 }
             );
             context.SaveChanges();
         }
@@ -68,4 +90,3 @@ public static class DbSeeder
         return Convert.ToBase64String(hashedBytes);
     }
 }
-

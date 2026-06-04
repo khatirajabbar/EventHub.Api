@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 namespace EventHub.Api.Extensions;
 
@@ -18,7 +19,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddAllServices(this IServiceCollection services, IConfiguration config)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
 
         services.AddAutoMapper(typeof(MappingProfile));
 
