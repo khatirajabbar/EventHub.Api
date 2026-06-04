@@ -18,7 +18,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<EventHub.Api.Middleware.GlobalExceptionHandler>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();

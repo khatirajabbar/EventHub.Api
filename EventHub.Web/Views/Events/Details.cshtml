@@ -430,3 +430,12 @@ else
         </div>
     </div>
 }
+<div class="admin-controls">
+    <a href="@Url.Action("Edit", "Events", new { id = Model.Id })" class="btn-admin">Edit Event</a>
+    <a href="@Url.Action("CreateTicket", "Events", new { eventId = Model.Id })" class="btn-admin">+ Add Ticket</a>
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" style="margin:0"
+          onsubmit="return confirm('Delete this event?')">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn-admin btn-admin-delete">Delete</button>
+    </form>
+</div>

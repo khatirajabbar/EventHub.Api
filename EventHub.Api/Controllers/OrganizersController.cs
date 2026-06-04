@@ -2,6 +2,7 @@ using AutoMapper;
 using EventHub.Api.Data;
 using EventHub.Api.DTOs.Organizer;
 using EventHub.Api.Entities;
+using EventHub.Api.Models;
 using EventHub.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,24 +25,17 @@ public class OrganizersController : ControllerBase
         _fileService = fileService;
     }
 
-    // Helper method to convert relative URLs to absolute URLs
     private string GetAbsoluteUrl(string relativePath)
     {
-        if (string.IsNullOrEmpty(relativePath))
-            return null;
-        
+        if (string.IsNullOrEmpty(relativePath)) return null;
         var request = HttpContext.Request;
-        var baseUrl = $"{request.Scheme}://{request.Host}";
-        return $"{baseUrl}{relativePath}";
+        return $"{request.Scheme}://{request.Host}{relativePath}";
     }
 
-    // Helper method to apply absolute URLs to organizer DTO
     private OrganizerResponseDto ApplyAbsoluteUrls(OrganizerResponseDto organizer)
     {
         if (organizer != null && !string.IsNullOrEmpty(organizer.LogoUrl))
-        {
             organizer.LogoUrl = GetAbsoluteUrl(organizer.LogoUrl);
-        }
         return organizer;
     }
 
@@ -52,7 +46,7 @@ public class OrganizersController : ControllerBase
         var organizers = await _context.Organizers.ToListAsync();
         var result = _mapper.Map<List<OrganizerResponseDto>>(organizers);
         result = result.Select(ApplyAbsoluteUrls).ToList();
-        return Ok(result);
+        return Ok(ApiResponse<List<OrganizerResponseDto>>.Ok(result));
     }
 
     // GET /api/organizers/{id}
@@ -60,10 +54,11 @@ public class OrganizersController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var organizer = await _context.Organizers.FindAsync(id);
-        if (organizer == null) return NotFound();
+        if (organizer == null)
+            return NotFound(ApiResponse.Fail("Organizer not found."));
         var result = _mapper.Map<OrganizerResponseDto>(organizer);
         result = ApplyAbsoluteUrls(result);
-        return Ok(result);
+        return Ok(ApiResponse<OrganizerResponseDto>.Ok(result));
     }
 
     // POST /api/organizers
@@ -76,7 +71,8 @@ public class OrganizersController : ControllerBase
         await _context.SaveChangesAsync();
         var result = _mapper.Map<OrganizerResponseDto>(organizer);
         result = ApplyAbsoluteUrls(result);
-        return CreatedAtAction(nameof(GetById), new { id = organizer.Id }, result);
+        return CreatedAtAction(nameof(GetById), new { id = organizer.Id },
+            ApiResponse<OrganizerResponseDto>.Ok(result, "Organizer created successfully."));
     }
 
     // PUT /api/organizers/{id}
@@ -85,12 +81,13 @@ public class OrganizersController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] OrganizerUpdateDto dto)
     {
         var organizer = await _context.Organizers.FindAsync(id);
-        if (organizer == null) return NotFound();
+        if (organizer == null)
+            return NotFound(ApiResponse.Fail("Organizer not found."));
         _mapper.Map(dto, organizer);
         await _context.SaveChangesAsync();
         var result = _mapper.Map<OrganizerResponseDto>(organizer);
         result = ApplyAbsoluteUrls(result);
-        return Ok(result);
+        return Ok(ApiResponse<OrganizerResponseDto>.Ok(result, "Organizer updated successfully."));
     }
 
     // DELETE /api/organizers/{id}
@@ -99,10 +96,11 @@ public class OrganizersController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var organizer = await _context.Organizers.FindAsync(id);
-        if (organizer == null) return NotFound();
+        if (organizer == null)
+            return NotFound(ApiResponse.Fail("Organizer not found."));
         _context.Organizers.Remove(organizer);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(ApiResponse.OkNoData("Organizer deleted successfully."));
     }
 
     // POST /api/organizers/{id}/logo
@@ -110,19 +108,13 @@ public class OrganizersController : ControllerBase
     // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UploadLogo(int id, IFormFile file)
     {
-        try
-        {
-            var organizer = await _context.Organizers.FindAsync(id);
-            if (organizer == null) return NotFound();
-            var url = await _fileService.SaveFileAsync(file, "logos");
-            organizer.LogoUrl = url;
-            await _context.SaveChangesAsync();
-            return Ok(new { logoUrl = GetAbsoluteUrl(url) });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var organizer = await _context.Organizers.FindAsync(id);
+        if (organizer == null)
+            return NotFound(ApiResponse.Fail("Organizer not found."));
+        var url = await _fileService.SaveFileAsync(file, "logos");
+        organizer.LogoUrl = url;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponse<object>.Ok(new { logoUrl = GetAbsoluteUrl(url) }, "Logo uploaded successfully."));
     }
 
     // GET /api/organizers/{organizerId}/events
@@ -131,7 +123,8 @@ public class OrganizersController : ControllerBase
     public async Task<IActionResult> GetEvents(int organizerId)
     {
         var exists = await _context.Organizers.AnyAsync(o => o.Id == organizerId);
-        if (!exists) return NotFound();
+        if (!exists)
+            return NotFound(ApiResponse.Fail("Organizer not found."));
         var events = await _context.Events
             .Where(e => e.OrganizerId == organizerId)
             .Include(e => e.Organizer)
@@ -145,6 +138,6 @@ public class OrganizersController : ControllerBase
                 e.BannerImageUrl = GetAbsoluteUrl(e.BannerImageUrl);
             return e;
         }).ToList();
-        return Ok(result);
+        return Ok(ApiResponse<List<DTOs.Event.EventResponseDto>>.Ok(result));
     }
 }

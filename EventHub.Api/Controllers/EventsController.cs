@@ -2,6 +2,7 @@ using AutoMapper;
 using EventHub.Api.Data;
 using EventHub.Api.DTOs.Event;
 using EventHub.Api.Entities;
+using EventHub.Api.Models;
 using EventHub.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,25 +25,19 @@ public class EventsController : ControllerBase
         _fileService = fileService;
     }
 
-    // Helper method to convert relative URLs to absolute URLs
     private string GetAbsoluteUrl(string relativePath)
     {
-        if (string.IsNullOrEmpty(relativePath))
-            return null;
-        
+        if (string.IsNullOrEmpty(relativePath)) return null;
         var request = HttpContext.Request;
-        var baseUrl = $"{request.Scheme}://{request.Host}";
-        return $"{baseUrl}{relativePath}";
+        return $"{request.Scheme}://{request.Host}{relativePath}";
     }
 
-    // Helper method to apply absolute URLs to event DTO
     private EventResponseDto ApplyAbsoluteUrls(EventResponseDto eventDto)
     {
         if (eventDto != null)
         {
             if (!string.IsNullOrEmpty(eventDto.BannerImageUrl))
                 eventDto.BannerImageUrl = GetAbsoluteUrl(eventDto.BannerImageUrl);
-            
             if (eventDto.Organizer != null && !string.IsNullOrEmpty(eventDto.Organizer.LogoUrl))
                 eventDto.Organizer.LogoUrl = GetAbsoluteUrl(eventDto.Organizer.LogoUrl);
         }
@@ -56,7 +51,7 @@ public class EventsController : ControllerBase
         var events = await _context.Events.Include(e => e.Organizer).ToListAsync();
         var result = _mapper.Map<List<EventResponseDto>>(events);
         result = result.Select(ApplyAbsoluteUrls).ToList();
-        return Ok(result);
+        return Ok(ApiResponse<List<EventResponseDto>>.Ok(result));
     }
 
     // GET /api/events/{id}
@@ -64,10 +59,11 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var ev = await _context.Events.Include(e => e.Organizer).FirstOrDefaultAsync(e => e.Id == id);
-        if (ev == null) return NotFound();
+        if (ev == null)
+            return NotFound(ApiResponse.Fail("Event not found."));
         var result = _mapper.Map<EventResponseDto>(ev);
         result = ApplyAbsoluteUrls(result);
-        return Ok(result);
+        return Ok(ApiResponse<EventResponseDto>.Ok(result));
     }
 
     // POST /api/events
@@ -77,14 +73,15 @@ public class EventsController : ControllerBase
     {
         var organizerExists = await _context.Organizers.AnyAsync(o => o.Id == dto.OrganizerId);
         if (!organizerExists)
-            return BadRequest(new { error = "Organizer with the specified ID does not exist." });
+            return BadRequest(ApiResponse.Fail("Organizer with the specified ID does not exist."));
 
         var ev = _mapper.Map<Event>(dto);
         _context.Events.Add(ev);
         await _context.SaveChangesAsync();
         var result = _mapper.Map<EventResponseDto>(ev);
         result = ApplyAbsoluteUrls(result);
-        return CreatedAtAction(nameof(GetById), new { id = ev.Id }, result);
+        return CreatedAtAction(nameof(GetById), new { id = ev.Id },
+            ApiResponse<EventResponseDto>.Ok(result, "Event created successfully."));
     }
 
     // PUT /api/events/{id}
@@ -93,17 +90,18 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] EventUpdateDto dto)
     {
         var ev = await _context.Events.FindAsync(id);
-        if (ev == null) return NotFound();
+        if (ev == null)
+            return NotFound(ApiResponse.Fail("Event not found."));
 
         var organizerExists = await _context.Organizers.AnyAsync(o => o.Id == dto.OrganizerId);
         if (!organizerExists)
-            return BadRequest(new { error = "Organizer with the specified ID does not exist." });
+            return BadRequest(ApiResponse.Fail("Organizer with the specified ID does not exist."));
 
         _mapper.Map(dto, ev);
         await _context.SaveChangesAsync();
         var result = _mapper.Map<EventResponseDto>(ev);
         result = ApplyAbsoluteUrls(result);
-        return Ok(result);
+        return Ok(ApiResponse<EventResponseDto>.Ok(result, "Event updated successfully."));
     }
 
     // DELETE /api/events/{id}
@@ -112,10 +110,11 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var ev = await _context.Events.FindAsync(id);
-        if (ev == null) return NotFound();
+        if (ev == null)
+            return NotFound(ApiResponse.Fail("Event not found."));
         _context.Events.Remove(ev);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(ApiResponse.OkNoData("Event deleted successfully."));
     }
 
     // POST /api/events/{id}/banner
@@ -123,19 +122,14 @@ public class EventsController : ControllerBase
     // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UploadBanner(int id, IFormFile file)
     {
-        try
-        {
-            var ev = await _context.Events.FindAsync(id);
-            if (ev == null) return NotFound();
-            var url = await _fileService.SaveFileAsync(file, "banners");
-            ev.BannerImageUrl = url;
-            await _context.SaveChangesAsync();
-            return Ok(new { bannerUrl = GetAbsoluteUrl(url) });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var ev = await _context.Events.FindAsync(id);
+        if (ev == null)
+            return NotFound(ApiResponse.Fail("Event not found."));
+
+        var url = await _fileService.SaveFileAsync(file, "banners");
+        ev.BannerImageUrl = url;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponse<object>.Ok(new { bannerUrl = GetAbsoluteUrl(url) }, "Banner uploaded successfully."));
     }
 
     // GET /api/events/{eventId}/tickets
@@ -144,12 +138,15 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> GetTickets(int eventId)
     {
         var exists = await _context.Events.AnyAsync(e => e.Id == eventId);
-        if (!exists) return NotFound();
+        if (!exists)
+            return NotFound(ApiResponse.Fail("Event not found."));
+
         var tickets = await _context.Tickets
             .Where(t => t.EventId == eventId)
             .Include(t => t.Event)
             .ToListAsync();
-        return Ok(_mapper.Map<List<DTOs.Ticket.TicketResponseDto>>(tickets));
+        var result = _mapper.Map<List<DTOs.Ticket.TicketResponseDto>>(tickets);
+        return Ok(ApiResponse<List<DTOs.Ticket.TicketResponseDto>>.Ok(result));
     }
 
     // POST /api/events/{eventId}/tickets
@@ -158,12 +155,15 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> CreateTicket(int eventId, [FromBody] DTOs.Ticket.TicketCreateDto dto)
     {
         var exists = await _context.Events.AnyAsync(e => e.Id == eventId);
-        if (!exists) return NotFound();
+        if (!exists)
+            return NotFound(ApiResponse.Fail("Event not found."));
+
         var ticket = _mapper.Map<Ticket>(dto);
         ticket.EventId = eventId;
         _context.Tickets.Add(ticket);
         await _context.SaveChangesAsync();
-        return Ok(_mapper.Map<DTOs.Ticket.TicketResponseDto>(ticket));
+        var result = _mapper.Map<DTOs.Ticket.TicketResponseDto>(ticket);
+        return Ok(ApiResponse<DTOs.Ticket.TicketResponseDto>.Ok(result, "Ticket created successfully."));
     }
 
     // GET /api/events/{eventId}/organizer
@@ -172,11 +172,14 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> GetOrganizer(int eventId)
     {
         var ev = await _context.Events.Include(e => e.Organizer).FirstOrDefaultAsync(e => e.Id == eventId);
-        if (ev == null) return NotFound();
-        if (ev.Organizer == null) return NotFound(new { error = "Organizer not found for this event." });
+        if (ev == null)
+            return NotFound(ApiResponse.Fail("Event not found."));
+        if (ev.Organizer == null)
+            return NotFound(ApiResponse.Fail("Organizer not found for this event."));
+
         var result = _mapper.Map<DTOs.Organizer.OrganizerResponseDto>(ev.Organizer);
         if (!string.IsNullOrEmpty(result.LogoUrl))
             result.LogoUrl = GetAbsoluteUrl(result.LogoUrl);
-        return Ok(result);
+        return Ok(ApiResponse<DTOs.Organizer.OrganizerResponseDto>.Ok(result));
     }
 }

@@ -99,6 +99,12 @@
                 <option value="">— Select organizer —</option>
             </select>
             <span asp-validation-for="OrganizerId" class="validation-message"></span>
+            <div style="margin-top:8px">
+                <a href="@Url.Action("CreateOrganizer", "Events")"
+                   style="font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:0.08em;">
+                    + Create new organizer
+                </a>
+            </div>
         </div>
 
         <button type="submit" class="btn-submit" id="submitBtn">Create Event</button>

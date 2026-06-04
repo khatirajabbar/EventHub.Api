@@ -145,4 +145,56 @@ public class EventsController : Controller
         TempData["SuccessMessage"] = "Event deleted successfully!";
         return RedirectToAction(nameof(Index));
     }
+    public IActionResult CreateOrganizer()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateOrganizer(OrganizerCreateDto dto)
+    {
+        if (!ModelState.IsValid) return View(dto);
+
+        var created = await _eventService.CreateOrganizerAsync(dto);
+        if (created == null)
+        {
+            ModelState.AddModelError(string.Empty, "Failed to create organizer.");
+            return View(dto);
+        }
+
+        TempData["SuccessMessage"] = $"Organizer '{created.Name}' created!";
+        return RedirectToAction(nameof(Create));
+    }
+
+    public async Task<IActionResult> CreateTicket(int eventId)
+    {
+        var ev = await _eventService.GetEventByIdAsync(eventId);
+        if (ev == null) return NotFound();
+        ViewBag.Event = ev;
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateTicket(int eventId, TicketCreateDto dto)
+    {
+        var ev = await _eventService.GetEventByIdAsync(eventId);
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Event = ev;
+            return View(dto);
+        }
+
+        var created = await _eventService.CreateTicketAsync(eventId, dto);
+        if (created == null)
+        {
+            ModelState.AddModelError(string.Empty, "Failed to create ticket.");
+            ViewBag.Event = ev;
+            return View(dto);
+        }
+
+        TempData["SuccessMessage"] = "Ticket added!";
+        return RedirectToAction(nameof(Details), new { id = eventId });
+    }
 }

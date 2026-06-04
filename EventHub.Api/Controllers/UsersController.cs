@@ -1,6 +1,7 @@
 using AutoMapper;
 using EventHub.Api.Data;
 using EventHub.Api.DTOs.User;
+using EventHub.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var users = await _context.Users.ToListAsync();
-        return Ok(_mapper.Map<List<UserResponseDto>>(users));
+        return Ok(ApiResponse<List<UserResponseDto>>.Ok(_mapper.Map<List<UserResponseDto>>(users)));
     }
 
     // GET /api/users/{id}
@@ -34,8 +35,9 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-        return Ok(_mapper.Map<UserResponseDto>(user));
+        if (user == null)
+            return NotFound(ApiResponse.Fail("User not found."));
+        return Ok(ApiResponse<UserResponseDto>.Ok(_mapper.Map<UserResponseDto>(user)));
     }
 
     // PUT /api/users/{id}/role
@@ -43,15 +45,15 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> UpdateRole(int id, [FromBody] UpdateUserRoleDto dto)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+        if (user == null)
+            return NotFound(ApiResponse.Fail("User not found."));
 
-        // Prevent changing own role
         var currentUserId = User.FindFirst("sub")?.Value;
         if (currentUserId != null && int.Parse(currentUserId) == id)
-            return BadRequest(new { error = "You cannot change your own role." });
+            return BadRequest(ApiResponse.Fail("You cannot change your own role."));
 
         user.Role = dto.Role;
         await _context.SaveChangesAsync();
-        return Ok(new { message = $"User role updated to {dto.Role}.", user = _mapper.Map<UserResponseDto>(user) });
+        return Ok(ApiResponse<UserResponseDto>.Ok(_mapper.Map<UserResponseDto>(user), $"User role updated to {dto.Role}."));
     }
 }

@@ -9,8 +9,10 @@ public class AuthService : IAuthService
     private readonly HttpClient _httpClient;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IHttpClientFactory httpClientFactory, ILogger<AuthService> logger)
-    {
+    private static readonly JsonSerializerOptions JsonOptions =
+        new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+    public AuthService(IHttpClientFactory httpClientFactory, ILogger<AuthService> logger)    {
         _httpClient = httpClientFactory.CreateClient("EventHubApi");
         _logger = logger;
     }
@@ -19,24 +21,25 @@ public class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Base address: {BaseAddress}", _httpClient.BaseAddress);
-
             var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/auth/login", content);
-
             var json = await response.Content.ReadAsStringAsync();
+
+            // Always try to deserialize to our wrapper, as even errors use the ApiResponse format now
+            var wrapped = JsonSerializer.Deserialize<ApiResponseWrapper<AuthResponseDto>>(json, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to login. Status: {response.StatusCode}, Error: {json}");
-                throw new Exception("Invalid username or password.");
+                _logger.LogError("Failed to login. Status: {StatusCode}, Error: {Message}", response.StatusCode, wrapped?.Message);
+                // Throw the actual message sent back by the API/Exception handler
+                throw new Exception(wrapped?.Message ?? "Invalid username or password.");
             }
 
-            return JsonSerializer.Deserialize<AuthResponseDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return wrapped?.Data ?? throw new Exception("Invalid response data received from server.");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error during login: {ex.Message}");
+            _logger.LogError(ex, "Error occurred during LoginAsync execution");
             throw;
         }
     }
@@ -47,20 +50,23 @@ public class AuthService : IAuthService
         {
             var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/auth/register", content);
-
             var json = await response.Content.ReadAsStringAsync();
+
+            // Always try to deserialize to our wrapper, as even errors use the ApiResponse format now
+            var wrapped = JsonSerializer.Deserialize<ApiResponseWrapper<RegisterResponseDto>>(json, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to register. Status: {response.StatusCode}, Error: {json}");
-                throw new Exception("Registration failed. Please try again.");
+                _logger.LogError("Failed to register. Status: {StatusCode}, Error: {Message}", response.StatusCode, wrapped?.Message);
+                // Throw the actual message sent back by the API/Exception handler
+                throw new Exception(wrapped?.Message ?? "Registration failed. Please try again.");
             }
 
-            return JsonSerializer.Deserialize<RegisterResponseDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return wrapped?.Data ?? throw new Exception("Invalid response data received from server.");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error during registration: {ex.Message}");
+            _logger.LogError(ex, "Error occurred during RegisterAsync execution");
             throw;
         }
     }

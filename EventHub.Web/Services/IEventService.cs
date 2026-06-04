@@ -13,4 +13,6 @@ public interface IEventService
     Task<EventResponseDto> UpdateEventAsync(int id, EventUpdateDto eventDto);
     Task<bool> DeleteEventAsync(int id);
     Task<List<TicketResponseDto>> GetTicketsByEventIdAsync(int eventId);
+    Task<OrganizerResponseDto?> CreateOrganizerAsync(OrganizerCreateDto dto);
+    Task<TicketResponseDto?> CreateTicketAsync(int eventId, TicketCreateDto dto);
 }

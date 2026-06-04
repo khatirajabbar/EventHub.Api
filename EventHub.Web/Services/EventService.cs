@@ -2,7 +2,6 @@ using EventHub.Web.Models.DTOs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-
 namespace EventHub.Web.Services;
 
 public class EventService : IEventService
@@ -18,18 +17,13 @@ public class EventService : IEventService
         _logger = logger;
     }
 
-    // Creates an HttpClient and attaches the JWT token from the logged-in user's cookie claims
     private HttpClient CreateAuthorizedClient()
     {
         var client = _httpClientFactory.CreateClient("EventHubApi");
-
         var token = _httpContextAccessor.HttpContext?.User?.FindFirst("Token")?.Value;
         if (!string.IsNullOrEmpty(token))
-        {
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        }
-
         return client;
     }
 
@@ -42,16 +36,14 @@ public class EventService : IEventService
         {
             var client = CreateAuthorizedClient();
             var response = await client.GetAsync("/api/events");
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to fetch events. Status code: {StatusCode}", response.StatusCode);
                 return new List<EventResponseDto>();
             }
-
             var json = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<List<EventResponseDto>>(json, JsonOptions)
-                   ?? new List<EventResponseDto>();
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<List<EventResponseDto>>>(json, JsonOptions);
+            return wrapped?.Data ?? new List<EventResponseDto>();
         }
         catch (Exception ex)
         {
@@ -66,15 +58,14 @@ public class EventService : IEventService
         {
             var client = CreateAuthorizedClient();
             var response = await client.GetAsync($"/api/events/{id}");
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to fetch event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return null;
             }
-
             var json = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(json, JsonOptions);
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<EventResponseDto>>(json, JsonOptions);
+            return wrapped?.Data;
         }
         catch (Exception ex)
         {
@@ -90,17 +81,15 @@ public class EventService : IEventService
             var client = CreateAuthorizedClient();
             var json = System.Text.Json.JsonSerializer.Serialize(eventDto);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
             var response = await client.PostAsync("/api/events", content);
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to create event. Status code: {StatusCode}", response.StatusCode);
                 return null;
             }
-
             var responseJson = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson, JsonOptions);
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<EventResponseDto>>(responseJson, JsonOptions);
+            return wrapped?.Data;
         }
         catch (Exception ex)
         {
@@ -116,17 +105,15 @@ public class EventService : IEventService
             var client = CreateAuthorizedClient();
             var json = System.Text.Json.JsonSerializer.Serialize(eventDto);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
             var response = await client.PutAsync($"/api/events/{id}", content);
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to update event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return null;
             }
-
             var responseJson = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<EventResponseDto>(responseJson, JsonOptions);
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<EventResponseDto>>(responseJson, JsonOptions);
+            return wrapped?.Data;
         }
         catch (Exception ex)
         {
@@ -141,13 +128,11 @@ public class EventService : IEventService
         {
             var client = CreateAuthorizedClient();
             var response = await client.DeleteAsync($"/api/events/{id}");
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to delete event {Id}. Status code: {StatusCode}", id, response.StatusCode);
                 return false;
             }
-
             return true;
         }
         catch (Exception ex)
@@ -163,16 +148,14 @@ public class EventService : IEventService
         {
             var client = CreateAuthorizedClient();
             var response = await client.GetAsync($"/api/events/{eventId}/tickets");
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to fetch tickets for event {EventId}. Status code: {StatusCode}", eventId, response.StatusCode);
                 return new List<TicketResponseDto>();
             }
-
             var json = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<List<TicketResponseDto>>(json, JsonOptions)
-                   ?? new List<TicketResponseDto>();
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<List<TicketResponseDto>>>(json, JsonOptions);
+            return wrapped?.Data ?? new List<TicketResponseDto>();
         }
         catch (Exception ex)
         {
@@ -180,6 +163,7 @@ public class EventService : IEventService
             return new List<TicketResponseDto>();
         }
     }
+
     public async Task<List<OrganizerResponseDto>> GetAllOrganizersAsync()
     {
         try
@@ -188,13 +172,54 @@ public class EventService : IEventService
             var response = await client.GetAsync("/api/organizers");
             if (!response.IsSuccessStatusCode) return new List<OrganizerResponseDto>();
             var json = await response.Content.ReadAsStringAsync();
-            return System.Text.Json.JsonSerializer.Deserialize<List<OrganizerResponseDto>>(json, JsonOptions)
-                   ?? new List<OrganizerResponseDto>();
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<List<OrganizerResponseDto>>>(json, JsonOptions);
+            return wrapped?.Data ?? new List<OrganizerResponseDto>();
+         
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching organizers");
             return new List<OrganizerResponseDto>();
+        }
+    }
+
+    public async Task<OrganizerResponseDto?> CreateOrganizerAsync(OrganizerCreateDto dto)
+    {
+        try
+        {
+            var client = CreateAuthorizedClient();
+            var json = System.Text.Json.JsonSerializer.Serialize(dto);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var response = await client.PostAsync("/api/organizers", content);
+            if (!response.IsSuccessStatusCode) return null;
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<OrganizerResponseDto>>(responseJson, JsonOptions);
+            return wrapped?.Data;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating organizer");
+            return null;
+        }
+    }
+
+    public async Task<TicketResponseDto?> CreateTicketAsync(int eventId, TicketCreateDto dto)
+    {
+        try
+        {
+            var client = CreateAuthorizedClient();
+            var json = System.Text.Json.JsonSerializer.Serialize(dto);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"/api/events/{eventId}/tickets", content);
+            if (!response.IsSuccessStatusCode) return null;
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var wrapped = System.Text.Json.JsonSerializer.Deserialize<ApiResponseWrapper<TicketResponseDto>>(responseJson, JsonOptions);
+            return wrapped?.Data;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating ticket for event {EventId}", eventId);
+            return null;
         }
     }
 }
