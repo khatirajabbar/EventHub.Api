@@ -83,9 +83,9 @@ public class EventsController : Controller
     }
 
     //[Authorize(Roles = "Admin")]
+//[Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
-        var organizers = await _eventService.GetAllOrganizersAsync();
         var @event = await _eventService.GetEventByIdAsync(id);
         if (@event == null)
             return NotFound();
@@ -102,10 +102,9 @@ public class EventsController : Controller
 
         ViewBag.EventId = id;
         ViewBag.OrganizerName = @event.Organizer?.Name;
-        ViewBag.Organizers = await _eventService.GetAllOrganizersAsync(); // add this
+        ViewBag.Organizers = await _eventService.GetAllOrganizersAsync();
         return View(dto);
     }
-
     //[Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
