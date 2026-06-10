@@ -53,14 +53,14 @@ public class EventsController : Controller
 
     // ─── Admin Actions ────────────────────────────────────────────────────────
 
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
         ViewBag.Organizers = await _eventService.GetAllOrganizersAsync();
         return View();
     }
 
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(EventCreateDto dto)
@@ -82,8 +82,8 @@ public class EventsController : Controller
         return RedirectToAction(nameof(Details), new { id = created.Id });
     }
 
-    //[Authorize(Roles = "Admin")]
-//[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
         var @event = await _eventService.GetEventByIdAsync(id);
@@ -129,7 +129,7 @@ public class EventsController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)

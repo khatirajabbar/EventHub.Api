@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
 
     // POST /api/auth/change-password
     [HttpPost("change-password")]
-    // [Authorize]
+    [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
         var userIdClaim = User.FindFirst("sub")?.Value;
@@ -63,7 +63,7 @@ public class AuthController : ControllerBase
 
     // POST /api/auth/change-email
     [HttpPost("change-email")]
-    // [Authorize]
+    [Authorize]
     public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto dto)
     {
         var userIdClaim = User.FindFirst("sub")?.Value;
@@ -87,7 +87,7 @@ public class AuthController : ControllerBase
 
     // GET /api/auth/profile
     [HttpGet("profile")]
-    // [Authorize]
+    [Authorize]
     public async Task<IActionResult> GetProfile()
     {
         var userIdClaim = User.FindFirst("sub")?.Value;

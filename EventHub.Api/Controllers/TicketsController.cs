@@ -24,7 +24,7 @@ public class TicketsController : ControllerBase
 
     // GET /api/tickets
     [HttpGet]
-    // [Authorize]
+    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var tickets = await _context.Tickets.Include(t => t.Event).ToListAsync();
@@ -34,7 +34,7 @@ public class TicketsController : ControllerBase
 
     // GET /api/tickets/{id}
     [HttpGet("{id}")]
-    // [Authorize]
+    [Authorize]
     public async Task<IActionResult> GetById(int id)
     {
         var ticket = await _context.Tickets.Include(t => t.Event).FirstOrDefaultAsync(t => t.Id == id);
@@ -45,7 +45,7 @@ public class TicketsController : ControllerBase
 
     // POST /api/tickets
     [HttpPost]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromForm] TicketCreateDto dto)
     {
         var eventExists = await _context.Events.AnyAsync(e => e.Id == dto.EventId);
@@ -62,7 +62,7 @@ public class TicketsController : ControllerBase
 
     // PUT /api/tickets/{id}
     [HttpPut("{id}")]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] TicketUpdateDto dto)
     {
         var ticket = await _context.Tickets.FindAsync(id);
@@ -80,7 +80,7 @@ public class TicketsController : ControllerBase
 
     // DELETE /api/tickets/{id}
     [HttpDelete("{id}")]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var ticket = await _context.Tickets.FindAsync(id);
